@@ -11,7 +11,6 @@ using System.IO;
 using R.Models;
 namespace R.Api.Controllers
 {
-
     [ApiController]
     [Route("[controller]")]
     public class PublicDataController : ControllerBase
