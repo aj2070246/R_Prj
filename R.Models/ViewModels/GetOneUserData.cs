@@ -9,7 +9,7 @@ namespace R.Models.ViewModels
 {
     public class GetOneUserData
     {
-        public long Id { get; set; }
+        public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string MyDescription { get; set; }

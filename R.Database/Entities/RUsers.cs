@@ -10,7 +10,7 @@ namespace R.Database.Entities
     public class RUsers
     {
         [Key]
-        public long Id { get; set; }
+        public string Id { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string UserName { get; set; }
@@ -20,9 +20,7 @@ namespace R.Database.Entities
         public string RDescription { get; set; }
         public string Token { get; set; }
         public DateTime TokenExpireDate { get; set; }
-        public DateTime BirthDate { get; set; }
-        public Age Age { get; set; }
-        public long AgeId { get; set; }
+        public DateTime BirthDate { get; set; } 
         public Gender Gender { get; set; }
         public long GenderId { get; set; }
         public HealthStatus HealthStatus { get; set; }

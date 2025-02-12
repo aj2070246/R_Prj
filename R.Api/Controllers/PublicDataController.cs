@@ -34,9 +34,9 @@ namespace R.Api.Controllers
 
         [HttpGet("RegisterUser")]
         public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
-        {
-            bool result = _service.RegisterUser(model);
-            return new ResultModel<bool>(result, result);
+        { 
+            var result = _service.RegisterUser(model);
+            return result;
         }
 
 

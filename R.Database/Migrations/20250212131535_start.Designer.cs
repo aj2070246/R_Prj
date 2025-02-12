@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using R.Database;
 
@@ -11,9 +12,11 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    partial class RDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250212131535_start")]
+    partial class start
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -212,34 +215,6 @@ namespace R.Database.Migrations
                     b.HasIndex("ProvinceId");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.UsersMessages", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("MessageStatusId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MessageText")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReceiverUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("SendDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("SenderUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UsersMessages");
                 });
 
             modelBuilder.Entity("R.Database.Entities.RUsers", b =>

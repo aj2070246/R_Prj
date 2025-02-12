@@ -12,8 +12,8 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    [Migration("20250212100812_t2")]
-    partial class t2
+    [Migration("20250212133058_messages2")]
+    partial class messages2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,23 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Age");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.Captcha", b =>
+                {
+                    b.Property<string>("CaptchaId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CaptchaValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ExpireDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("CaptchaId");
+
+                    b.ToTable("Captchas");
                 });
 
             modelBuilder.Entity("R.Database.Entities.Gender", b =>
@@ -129,14 +146,8 @@ namespace R.Database.Migrations
 
             modelBuilder.Entity("R.Database.Entities.RUsers", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("AgeId")
-                        .HasColumnType("bigint");
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("datetime2");
@@ -184,13 +195,14 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime>("TokenExpireDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("AgeId");
 
                     b.HasIndex("GenderId");
 
@@ -205,14 +217,36 @@ namespace R.Database.Migrations
                     b.ToTable("Users");
                 });
 
+            modelBuilder.Entity("R.Database.Entities.UsersMessages", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("MessageStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MessageText")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReceiverUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("SendDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UsersMessages");
+                });
+
             modelBuilder.Entity("R.Database.Entities.RUsers", b =>
                 {
-                    b.HasOne("R.Database.Entities.Age", "Age")
-                        .WithMany()
-                        .HasForeignKey("AgeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("R.Database.Entities.Gender", "Gender")
                         .WithMany()
                         .HasForeignKey("GenderId")
@@ -242,8 +276,6 @@ namespace R.Database.Migrations
                         .HasForeignKey("ProvinceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Age");
 
                     b.Navigation("Gender");
 

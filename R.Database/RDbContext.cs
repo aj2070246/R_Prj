@@ -12,6 +12,7 @@ namespace R.Database
     {
         public RDbContext(DbContextOptions<RDbContext> options) : base(options) { }
         public DbSet<RUsers> Users { get; set; }
+        public DbSet<UsersMessages> UsersMessages { get; set; }
         public DbSet<Captcha> Captchas { get; set; }
         public DbSet<Age> Age { get; set; }
         public DbSet<HealthStatus> HealthStatus { get; set; }

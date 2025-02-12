@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace R.Database.Migrations
 {
     /// <inheritdoc />
-    public partial class MigrationName : Migration
+    public partial class start : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -22,6 +22,19 @@ namespace R.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Age", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Captchas",
+                columns: table => new
+                {
+                    CaptchaId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    CaptchaValue = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ExpireDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Captchas", x => x.CaptchaId);
                 });
 
             migrationBuilder.CreateTable(
@@ -93,14 +106,17 @@ namespace R.Database.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Mobile = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MyDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    RDescription = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Token = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TokenExpireDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     BirthDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AgeId = table.Column<long>(type: "bigint", nullable: false),
                     GenderId = table.Column<long>(type: "bigint", nullable: false),
                     HealthStatusId = table.Column<long>(type: "bigint", nullable: false),
                     LiveTypeId = table.Column<long>(type: "bigint", nullable: false),
@@ -110,12 +126,6 @@ namespace R.Database.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Age_AgeId",
-                        column: x => x.AgeId,
-                        principalTable: "Age",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Users_Gender_GenderId",
                         column: x => x.GenderId,
@@ -149,11 +159,6 @@ namespace R.Database.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Users_AgeId",
-                table: "Users",
-                column: "AgeId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Users_GenderId",
                 table: "Users",
                 column: "GenderId");
@@ -183,10 +188,13 @@ namespace R.Database.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Age");
 
             migrationBuilder.DropTable(
-                name: "Age");
+                name: "Captchas");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Gender");
