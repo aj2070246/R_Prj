@@ -1,5 +1,5 @@
-using System;
-using R.Database; 
+﻿using System;
+using R.Database;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection.Repositories;
@@ -8,6 +8,15 @@ using R.Services.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigin", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+              .AllowAnyHeader()  // مجاز کردن هدرهای عمومی
+              .AllowAnyMethod();  // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
+    });
+});
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -20,13 +29,14 @@ builder.Services.AddDbContext<RDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
         );
 var app = builder.Build();
- 
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+//if (app.Environment.IsDevelopment())
+//{
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
 
