@@ -14,12 +14,16 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
               .AllowAnyHeader()  // مجاز کردن هدرهای عمومی
-              .AllowAnyMethod();  // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
+              .AllowAnyMethod()  // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
+                 .AllowCredentials(); // اضافه شده
+
     });
 });
+
 // Add services to the container.
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -30,9 +34,8 @@ builder.Services.AddDbContext<RDbContext>(options =>
         );
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+
 //if (app.Environment.IsDevelopment())
-//{
 app.UseSwagger();
 app.UseSwaggerUI();
 
