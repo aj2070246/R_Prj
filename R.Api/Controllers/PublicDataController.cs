@@ -32,7 +32,7 @@ namespace R.Api.Controllers
             return new ResultModel<AllDropDownItems>(result);
         }
 
-        [HttpGet("RegisterUser")]
+        [HttpPost("RegisterUser")]
         public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
         {
             var result = _service.RegisterUser(model);
@@ -75,7 +75,8 @@ namespace R.Api.Controllers
 
         private void SaveCaptchaToDatabase(string captchaId, string text)
         {
-            // ذخیره کپچا در حافظه، ردیس یا دیتابیس
+            _service.SaveCaptcha(new SaveCaptchaInputModel { CaptchaId = captchaId, CaptchaValue = text });
+
         }
 
         private string GenerateCaptchaImage(string text)

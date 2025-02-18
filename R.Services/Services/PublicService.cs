@@ -235,67 +235,77 @@ namespace R.Services.Services
 
         public ResultModel<List<GetOneUserData>> SearchUsers(SearchUsersInputModel model)
         {
-
-            string query = "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age  , " +
-                " p.ItemValue Province , h.ItemValue HealthStatus," +
-                " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
-                " inner join Province p on p.Id= u.ProvinceId" +
-                " inner join HealthStatus h on h.Id = u.HealthStatusId" +
-                " inner join LiveType l on l.Id = u.LiveTypeId" +
-                " inner join MarriageStatus m on m.Id = u.MarriageStatusId" +
-                " inner join gender g on g.Id = u.genderId" +
-                " where 1=1";
-            if (model.ProvinceId != 0)
-                query += $" and provinceId = {model.ProvinceId}";
-
-            if (model.AgeIdTo != 0)
-                query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) <= {model.AgeIdTo}";
-
-            if (model.AgeIdFrom != 0)
-                query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) >= {model.AgeIdFrom}";
-
-            if (model.LiveTypeId != 0)
-                query += $" and l.id = {model.LiveTypeId}";
-
-            if (model.HealthStatusId != 0)
-                query += $" and h.id = {model.HealthStatusId}";
-
-            if (model.MarriageStatusId != 0)
-                query += $" and m.id = {model.MarriageStatusId}";
-
-            var connection = db.Database.GetDbConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = query;
-            command.CommandType = CommandType.Text;
-            var users = new List<GetOneUserData>();
-            connection.Open();
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                var user = new GetOneUserData();
 
-                user.Id = reader.GetString(reader.GetOrdinal("Id"));
-                user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
-                user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
-                user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? null : reader.GetString(reader.GetOrdinal("MyDescription"));
-                user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? null : reader.GetString(reader.GetOrdinal("RDescription"));
-                user.BirthDate = reader.GetDateTime(reader.GetOrdinal("BirthDate"));
-                user.Age = reader.GetInt32("age");
-                user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
-                user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? null : reader.GetString(reader.GetOrdinal("HealthStatus"));
-                user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? null : reader.GetString(reader.GetOrdinal("LiveType"));
-                user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
-                user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+                string query = "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age  , " +
+                    " p.ItemValue Province , h.ItemValue HealthStatus," +
+                    " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
+                    " inner join Province p on p.Id= u.ProvinceId" +
+                    " inner join HealthStatus h on h.Id = u.HealthStatusId" +
+                    " inner join LiveType l on l.Id = u.LiveTypeId" +
+                    " inner join MarriageStatus m on m.Id = u.MarriageStatusId" +
+                    " inner join gender g on g.Id = u.genderId" +
+                    " where 1=1";
+                if (false)
+                {
+                    if (model.ProvinceId != 0)
+                        query += $" and provinceId = {model.ProvinceId}";
 
-                users.Add(user);
+                    if (model.AgeIdTo != 0)
+                        query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) <= {model.AgeIdTo}";
+
+                    if (model.AgeIdFrom != 0)
+                        query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) >= {model.AgeIdFrom}";
+
+                    if (model.LiveTypeId != 0)
+                        query += $" and l.id = {model.LiveTypeId}";
+
+                    if (model.HealthStatusId != 0)
+                        query += $" and h.id = {model.HealthStatusId}";
+
+                    if (model.MarriageStatusId != 0)
+                        query += $" and m.id = {model.MarriageStatusId}";
+                }
+                var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                var users = new List<GetOneUserData>();
+                connection.Open();
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var user = new GetOneUserData();
+
+                    user.Id = reader.GetString(reader.GetOrdinal("Id"));
+                    user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                    user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                    user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? null : reader.GetString(reader.GetOrdinal("MyDescription"));
+                    user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? null : reader.GetString(reader.GetOrdinal("RDescription"));
+                    user.BirthDate = reader.GetDateTime(reader.GetOrdinal("BirthDate"));
+                    user.Age = reader.GetInt32("age");
+                    user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
+                    user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? null : reader.GetString(reader.GetOrdinal("HealthStatus"));
+                    user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? null : reader.GetString(reader.GetOrdinal("LiveType"));
+                    user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
+                    user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+
+                    users.Add(user);
+                }
+
+                connection.Close(); // بستن کانکشن
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+                return new ResultModel<List<GetOneUserData>>(users);
+
             }
-
-            connection.Close(); // بستن کانکشن
-            if (users.Count() == 0)
-                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
-
-            return new ResultModel<List<GetOneUserData>>(users);
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false, "خطای دیتابیس");
+            }
         }
 
         public ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model)
@@ -332,14 +342,14 @@ namespace R.Services.Services
 
                 var senderUser = db.Users.FirstOrDefault(x => x.Id == model.SenderUserId);
                 var receiverUser = db.Users.FirstOrDefault(x => x.Id == model.ReceiverUserId);
- 
+
                 var sentMessage = db.UsersMessages
                     .Where(
                     x => (x.SenderUserId == model.SenderUserId && x.ReceiverUserId == model.ReceiverUserId) ||
                     (x.SenderUserId == model.ReceiverUserId && x.ReceiverUserId == model.SenderUserId))
                     .Select(x => new GetAllSentMessageResultModel
                     {
-                        Id=x.Id,
+                        Id = x.Id,
                         IsReceiveMessage = false,
                         SendDate = x.SendDate,
                         SenderUserId = x.SenderUserId,
@@ -353,7 +363,7 @@ namespace R.Services.Services
 
                 if (!sentMessage.Any())
                     return new ResultModel<List<GetAllSentMessageResultModel>>(false, "گفتگویی یافت نشد . برای شروع گفاگو مسیچ ارسال کنید");
-                 
+
 
                 var result = sentMessage.OrderByDescending(x => x.SendDate).ToList();
                 return new ResultModel<List<GetAllSentMessageResultModel>>(result);
