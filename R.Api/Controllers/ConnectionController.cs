@@ -30,6 +30,11 @@ namespace R.Api.Controllers
         {
             return _service.GetUserInfo(model);
         }
+        [HttpPost("DeleteMessage")]
+        public ResultModel<bool> DeleteMessage(SelectedItemModel model)
+        {
+            return new ResultModel<bool>(true,true);
+        }
 
         [HttpPost("GetMyAllMessages")]
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)

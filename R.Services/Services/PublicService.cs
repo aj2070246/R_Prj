@@ -292,6 +292,8 @@ namespace R.Services.Services
             }
 
             connection.Close(); // بستن کانکشن
+            if (users.Count() == 0)
+                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
             return new ResultModel<List<GetOneUserData>>(users);
         }
@@ -327,41 +329,33 @@ namespace R.Services.Services
         {
             try
             {
-             
+
                 var senderUser = db.Users.FirstOrDefault(x => x.Id == model.SenderUserId);
                 var receiverUser = db.Users.FirstOrDefault(x => x.Id == model.ReceiverUserId);
-              
-                var sentMessage = db.UsersMessages.Where(x => x.SenderUserId == model.SenderUserId)
+ 
+                var sentMessage = db.UsersMessages
+                    .Where(
+                    x => (x.SenderUserId == model.SenderUserId && x.ReceiverUserId == model.ReceiverUserId) ||
+                    (x.SenderUserId == model.ReceiverUserId && x.ReceiverUserId == model.SenderUserId))
                     .Select(x => new GetAllSentMessageResultModel
                     {
+                        Id=x.Id,
                         IsReceiveMessage = false,
                         SendDate = x.SendDate,
                         SenderUserId = x.SenderUserId,
                         ReceiverUserId = x.ReceiverUserId,
                         MessageStatusId = x.MessageStatusId,
-                        MessageStatus = "ارسال شده",
+                        MessageStatus = x.SenderUserId == model.SenderUserId ? "ارسال شده" : "دریافت شده",
                         MessageText = x.MessageText,
                         ReceiverUserFullName = receiverUser.FirstName + "  " + receiverUser.LastName,
                         SenderUserFullName = senderUser.FirstName + "  " + senderUser.LastName,
                     }).ToList();
 
-                var receiveMessage = db.UsersMessages.Where(x => x.SenderUserId == model.ReceiverUserId)
-                    .Select(x => new GetAllSentMessageResultModel
-                    {
-                        IsReceiveMessage = true,
-                        SendDate = x.SendDate,
-                        SenderUserId = x.SenderUserId,
-                        ReceiverUserId = x.ReceiverUserId,
-                        MessageStatusId = x.MessageStatusId,
-                        MessageStatus = "خوانده شده",
-                        MessageText = x.MessageText,
-                        ReceiverUserFullName = receiverUser.FirstName + "  " + receiverUser.LastName,
-                        SenderUserFullName = senderUser.FirstName + "  " + senderUser.LastName,
-                    }).ToList();
+                if (!sentMessage.Any())
+                    return new ResultModel<List<GetAllSentMessageResultModel>>(false, "گفتگویی یافت نشد . برای شروع گفاگو مسیچ ارسال کنید");
+                 
 
-                var allMessage = receiveMessage;
-                allMessage.AddRange(sentMessage);
-                var result = allMessage.OrderBy(x => x.SendDate).ToList();
+                var result = sentMessage.OrderByDescending(x => x.SendDate).ToList();
                 return new ResultModel<List<GetAllSentMessageResultModel>>(result);
             }
             catch (Exception e)

@@ -34,7 +34,7 @@ namespace R.Api.Controllers
 
         [HttpGet("RegisterUser")]
         public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
-        { 
+        {
             var result = _service.RegisterUser(model);
             return result;
         }
@@ -43,38 +43,56 @@ namespace R.Api.Controllers
         [HttpGet("login")]
         public ResultModel<LoginResultModel> login(LoginInputModel model)
         {
-            var  result = _service.login(model);
-            return result ;
+            var result = _service.login(model);
+            return result;
         }
-
         [HttpGet("GetCaptcha")]
         public IActionResult GetCaptcha()
         {
-            // ایجاد عدد تصادفی سه‌رقمی
-            Random random = new Random();
-            int captchaCode = random.Next(100, 999);
+            string captchaText = GenerateRandomText();
+            string captchaId = Guid.NewGuid().ToString();
 
-            bool result = _service.SaveCaptcha(new SaveCaptchaInputModel()
+            // ذخیره کپچا در کش یا دیتابیس
+            SaveCaptchaToDatabase(captchaId, captchaText);
+
+            // ایجاد تصویر کپچا
+            string base64Image = GenerateCaptchaImage(captchaText);
+
+            return Ok(new
             {
-                CaptchaId = Guid.NewGuid().ToString(),
-                CaptchaValue = captchaCode.ToString()
+                image = "data:image/png;base64," + base64Image,
+                guid = captchaId
             });
+        }
 
-            // تنظیم ابعاد تصویر
-            int width = 100, height = 50;
-            using Bitmap bitmap = new Bitmap(width, height);
-            using Graphics graphics = Graphics.FromImage(bitmap);
-            graphics.Clear(Color.White);
+        private string GenerateRandomText()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, 5)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
 
-            // تنظیم فونت و رنگ
-            using Font font = new Font("Arial", 20, FontStyle.Bold);
-            using SolidBrush brush = new SolidBrush(Color.Black);
-            graphics.DrawString(captchaCode.ToString(), font, brush, new PointF(20, 10));
+        private void SaveCaptchaToDatabase(string captchaId, string text)
+        {
+            // ذخیره کپچا در حافظه، ردیس یا دیتابیس
+        }
 
-            // تبدیل تصویر به بایت و ارسال به کاربر
-            using MemoryStream ms = new MemoryStream();
-            bitmap.Save(ms, ImageFormat.Png);
-            return File(ms.ToArray(), "image/png");
+        private string GenerateCaptchaImage(string text)
+        {
+            using (Bitmap bitmap = new Bitmap(120, 40))
+            using (Graphics g = Graphics.FromImage(bitmap))
+            {
+                g.Clear(Color.White);
+                Font font = new Font("Arial", 20, FontStyle.Bold);
+                g.DrawString(text, font, Brushes.Black, 10, 5);
+
+                using (MemoryStream ms = new MemoryStream())
+                {
+                    bitmap.Save(ms, ImageFormat.Png);
+                    return Convert.ToBase64String(ms.ToArray());
+                }
+            }
         }
     }
 }

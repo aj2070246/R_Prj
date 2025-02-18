@@ -8,7 +8,7 @@ namespace R.Models.ViewModels
 {
     public class SelectedItemModel
     {
-        public long NumberId { get; set; }
-        public string StringId { get; set; }
+        public long? NumberId { get; set; }
+        public string? StringId { get; set; }
     }
 }
