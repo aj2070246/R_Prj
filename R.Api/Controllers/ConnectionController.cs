@@ -1,13 +1,6 @@
-﻿using System.Drawing;
-using Microsoft.AspNetCore.Mvc;
-using R.Database;
+﻿using Microsoft.AspNetCore.Mvc;
 using R.Models.ViewModels;
 using R.Services.IServices;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using R.Models;
 namespace R.Api.Controllers
 {
@@ -17,6 +10,7 @@ namespace R.Api.Controllers
     {
         private readonly IPublicService _service;
         private readonly ILogger<WeatherForecastController> _logger;
+
 
         public ConnectionController(IPublicService service, ILogger<WeatherForecastController> logger)
         {
@@ -48,7 +42,7 @@ namespace R.Api.Controllers
         {
             return _service.GetMessagesWithOneUser(model);
         }
-      
+
         [HttpPost("SendMessage")]
         public ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model)
         {

@@ -12,12 +12,18 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+        policy.AllowAnyOrigin()
+        .WithOrigins("http://localhost:3001")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+         .WithOrigins("http://127.0.0.1:3001")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+        
+         .WithOrigins("http://127.0.0.1:5173")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+         .WithOrigins("http://localhost:5173")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+        
+         .WithOrigins("http://127.0.0.1:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+         .WithOrigins("http://localhost:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
               .AllowAnyHeader()  // مجاز کردن هدرهای عمومی
-              .AllowAnyMethod()  // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
-                 .AllowCredentials(); // اضافه شده
-
-    });
+              .AllowAnyMethod(); // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
+              });
 });
 
 // Add services to the container.
