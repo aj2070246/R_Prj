@@ -198,7 +198,7 @@ namespace R.Services.Services
                     ProvinceId = model.Province,
                     GenderId = model.Gender,
                     LiveTypeId = model.LiveType,
-                    HealthStatusId = model.HealthStatus,
+                    HealthStatusId = model.HealtStatus,
                     MarriageStatusId = model.MarriageStatus,
 
                 });

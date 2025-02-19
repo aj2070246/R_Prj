@@ -19,7 +19,7 @@ namespace R.Models.ViewModels
         public string RDescription { get; set; }
         public DateTime BirthDate { get; set; }
         public long Gender { get; set; }
-        public long HealthStatus { get; set; }
+        public long HealtStatus { get; set; }
         public long LiveType { get; set; }
         public long MarriageStatus { get; set; }
         public long Province { get; set; }
