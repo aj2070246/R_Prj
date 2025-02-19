@@ -32,7 +32,7 @@ namespace R.Api.Controllers
             return new ResultModel<AllDropDownItems>(result);
         }
 
-        [HttpGet("RegisterUser")]
+        [HttpPost("RegisterUser")]
         public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
         {
             var result = _service.RegisterUser(model);
