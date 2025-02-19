@@ -40,7 +40,7 @@ namespace R.Api.Controllers
         }
 
 
-        [HttpGet("login")]
+        [HttpPost("login")]
         public ResultModel<LoginResultModel> login(LoginInputModel model)
         {
             var result = _service.login(model);

@@ -23,5 +23,6 @@ namespace R.Models.ViewModels
         public long LiveType { get; set; }
         public long MarriageStatus { get; set; }
         public long Province { get; set; }
+        public string? EmailAddress { get; set; }
     }
 }

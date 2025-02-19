@@ -200,7 +200,15 @@ namespace R.Services.Services
                     LiveTypeId = model.LiveType,
                     HealthStatusId = model.HealtStatus,
                     MarriageStatusId = model.MarriageStatus,
-
+                    BirthDate = model.BirthDate,
+                    Mobile = model.Mobile,
+                    Token = "token",
+                    TokenExpireDate = DateTime.Now.AddHours(1),
+                    EmailAddress = model.EmailAddress,
+                    CreateUserDate = DateTime.Now,
+                    EmailAddressStatusId = 1,
+                    MobileStatusId = 1,
+                    UserStatus = 1,
                 });
                 db.SaveChanges();
                 return new ResultModel<bool>(true, true);
@@ -208,7 +216,7 @@ namespace R.Services.Services
             }
             catch (Exception e)
             {
-                return new ResultModel<bool>(false, "خطا در انجام عملیات");
+                return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException.ToString());
 
             }
         }
