@@ -161,6 +161,10 @@ namespace R.Services.Services
                     .Include(x => x.Province)
                     .Include(x => x.HealthStatus)
                     .Include(x => x.LiveType)
+                    .Include(x => x.IncomeAmount)
+                    .Include(x => x.CarValue)
+                    .Include(x => x.HomeValue)
+                    
                     .Include(x => x.MarriageStatus).FirstOrDefault();
 
 
@@ -173,13 +177,13 @@ namespace R.Services.Services
                 var token = Guid.NewGuid().ToString();
                 user.Token = token;
                 user.TokenExpireDate = DateTime.Now.AddHours(1);
+                user.LastActivityDate = DateTime.Now;
                 db.SaveChanges();
 
                 var loginResultModel = new LoginResultModel()
                 {
                     Id = user.Id,
                     Age = age,
-                    BirthDate = user.BirthDate,
                     Gender = user.Gender.ItemValue,
                     Province = user.Province.ItemValue,
                     HealthStatus = user.HealthStatus.ItemValue,
@@ -192,7 +196,16 @@ namespace R.Services.Services
                     MyDescription = user.MyDescription,
                     RDescription = user.RDescription,
                     UserName = user.UserName,
+                    IncomeAmount = user?.IncomeAmount?.ItemValue,
+                    CarValue = user?.CarValue?.ItemValue,
+                    HomeValue = user?.HomeValue?.ItemValue,
+
                 };
+
+
+                loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
+                loginResultModel.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
+
                 return new ResultModel<LoginResultModel>(loginResultModel);
 
             }

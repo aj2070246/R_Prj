@@ -17,12 +17,16 @@ namespace R.Models.ViewModels
         public string MyDescription { get; set; }
         public string RDescription { get; set; }
         public string Token { get; set; }
-        public DateTime BirthDate { get; set; }
+        public string BirthDate { get; set; }
         public int Age { get; set; }
         public string Gender { get; set; }
         public string HealthStatus { get; set; }
         public string LiveType { get; set; }
         public string MarriageStatus { get; set; }
-        public string Province { get; set; } 
+        public string Province { get; set; }
+        public string IncomeAmount { get; set; }
+        public string CarValue { get; set; }
+        public string HomeValue { get; set; }
+        public string LastActivityDate { get; set; }
     }
 }
