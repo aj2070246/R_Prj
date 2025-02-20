@@ -11,6 +11,7 @@ using R.Database;
 using R.Database.Entities;
 using R.Models;
 using R.Models.ViewModels;
+using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
@@ -29,7 +30,30 @@ namespace R.Services.Services
         {
             var result = new AllDropDownItems();
 
+            result.IncomeAmount = db.IncomeAmount.Select(x => new GetAllIncomeAmountModel()
+            {
+                Id = x.Id,
+                ItemValue = x.ItemValue
+            }).ToList();
+
+            result.CarValue = db.CarValue.Select(x => new GetAllCarValueModel()
+            {
+                Id = x.Id,
+                ItemValue = x.ItemValue
+            }).ToList();
+
+            result.HomeValue = db.HomeValue.Select(x => new GetAllHomeValueModel()
+            {
+                Id = x.Id,
+                ItemValue = x.ItemValue
+            }).ToList();
+
             result.Provinces = db.Province.Select(x => new GetAllProvinceModel()
+            {
+                Id = x.Id,
+                ItemValue = x.ItemValue
+            }).ToList();
+            result.RelationType = db.RelationType.Select(x => new GetAllRelationTypeMode()
             {
                 Id = x.Id,
                 ItemValue = x.ItemValue
@@ -68,8 +92,6 @@ namespace R.Services.Services
             return result;
         }
 
-
-
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
             var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
@@ -103,20 +125,26 @@ namespace R.Services.Services
         }
 
         public ResultModel<LoginResultModel> login(LoginInputModel model)
-
         {
             try
             {
-                if (model.CaptchaValue != "1" || model.CaptchaId != "1")
+                if (string.IsNullOrEmpty(model.CaptchaValue) || string.IsNullOrEmpty(model.CaptchaId))
+                    return new ResultModel<LoginResultModel>(false, "وارد کردن کد امنیتی اجباری است");
+
+
+                if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
+                    return new ResultModel<LoginResultModel>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
+
+
+                if (model.CaptchaValue != "1" && model.CaptchaId != "1")
                 {
-                    if (model.CaptchaValue == null || model.CaptchaId == null)
+                    if (string.IsNullOrEmpty(model.CaptchaValue) || string.IsNullOrEmpty(model.CaptchaId) || model.CaptchaValue == null || model.CaptchaId == null)
                         return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
 
-                    var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == model.CaptchaId && x.CaptchaValue == model.CaptchaValue);
+                    var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == model.CaptchaId && x.CaptchaValue.ToLower() == model.CaptchaValue.ToLower());
                     if (captchaResult != null)
                     {
-                        var date = DateTime.Now.AddMinutes(3);
-                        if (date > captchaResult.ExpireDate)
+                        if (DateTime.Now > captchaResult.ExpireDate)
                         {
                             db.Captchas.Remove(captchaResult);
                             db.SaveChanges();
@@ -124,21 +152,32 @@ namespace R.Services.Services
                             return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
                         }
                     }
+                    else
+                        return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
+
                 }
-                var user = db.Users.Where(x => x.UserName == model.UserName && x.Password == model.Password)
+                var user = db.Users.Where(x => x.UserName.ToLower() == model.UserName.ToLower() && x.Password == model.Password)
                     .Include(x => x.Gender)
                     .Include(x => x.Province)
                     .Include(x => x.HealthStatus)
                     .Include(x => x.LiveType)
                     .Include(x => x.MarriageStatus).FirstOrDefault();
+
+
                 if (user == null)
                 {
                     return new ResultModel<LoginResultModel>(false, "نام کاربری یا رمز عبور اشتباه است");
                 }
 
                 var age = DateTime.Now.Year - user.BirthDate.Year;
+                var token = Guid.NewGuid().ToString();
+                user.Token = token;
+                user.TokenExpireDate = DateTime.Now.AddHours(1);
+                db.SaveChanges();
+
                 var loginResultModel = new LoginResultModel()
                 {
+                    Id = user.Id,
                     Age = age,
                     BirthDate = user.BirthDate,
                     Gender = user.Gender.ItemValue,
@@ -148,7 +187,7 @@ namespace R.Services.Services
                     MarriageStatus = user.MarriageStatus.ItemValue,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Token = Guid.NewGuid().ToString(),
+                    Token =token,
                     Mobile = user.Mobile,
                     MyDescription = user.MyDescription,
                     RDescription = user.RDescription,
@@ -165,6 +204,13 @@ namespace R.Services.Services
 
         public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
         {
+
+            if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
+                return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
+           
+            if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Mobile))
+                return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
+
             try
             {
                 if (model.CaptchaValue != "1" || model.CaptchaId != "1")
@@ -175,8 +221,7 @@ namespace R.Services.Services
                     var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == model.CaptchaId && x.CaptchaValue == model.CaptchaValue);
                     if (captchaResult != null)
                     {
-                        var date = DateTime.Now.AddMinutes(3);
-                        if (date > captchaResult.ExpireDate)
+                        if (DateTime.Now > captchaResult.ExpireDate)
                         {
                             db.Captchas.Remove(captchaResult);
                             db.SaveChanges();
@@ -184,9 +229,26 @@ namespace R.Services.Services
                             return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
                         }
                     }
+                    else
+                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
                 }
+                var douplicated = db.Users.Any(x => x.UserName.ToLower() == model.UserName.ToLower());
+                if (douplicated)
+                    return new ResultModel<bool>(false, "نام کاربری به کاربر دیگری اختصاص یافته است");
+                
+                douplicated = db.Users.Any(x => x.Mobile.ToLower() == model.Mobile.ToLower());
+                if (douplicated)
+                    return new ResultModel<bool>(false, "موبایل به کاربر دیگری اختصاص یافته است");
+
+                douplicated = db.Users.Any(x => x.EmailAddress.ToLower() == model.EmailAddress.ToLower());
+                if (douplicated) 
+                    return new ResultModel<bool>(false, "پست الکترونیک به کاربر دیگری اختصاص یافته است");
+
+
                 var id = Guid.NewGuid().ToString();
                 var age = (DateTime.Now.Year - model.BirthDate.Year);
+      
                 db.Users.Add(new RUsers
                 {
                     Id = id,
@@ -203,13 +265,18 @@ namespace R.Services.Services
                     MarriageStatusId = model.MarriageStatus,
                     BirthDate = model.BirthDate,
                     Mobile = model.Mobile,
-                    Token = "token",
+                    Token = id + id.Reverse(),
                     TokenExpireDate = DateTime.Now.AddHours(1),
                     EmailAddress = model.EmailAddress,
                     CreateUserDate = DateTime.Now,
                     EmailAddressStatusId = 1,
                     MobileStatusId = 1,
                     UserStatus = 1,
+                    IncomeAmountId = model.IncomeAmount,
+                    HomeValueId = model.HomeValue,
+                    CarValueId = model.CarValue,
+                    RelationTypeId = model.RelationType
+
                 });
                 db.SaveChanges();
                 return new ResultModel<bool>(true, true);
@@ -217,7 +284,7 @@ namespace R.Services.Services
             }
             catch (Exception e)
             {
-                return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException.ToString());
+                return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException?.ToString());
 
             }
         }

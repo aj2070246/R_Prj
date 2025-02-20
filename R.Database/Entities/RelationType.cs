@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace R.Models.ViewModels
 
+namespace R.Database.Entities
 {
-    public class GetAllHealthStatusModel
+    public class RelationType
     {
         [Key]
         public long Id { get; set; }

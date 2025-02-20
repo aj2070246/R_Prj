@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using R.Database;
 
@@ -11,9 +12,11 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    partial class RDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250220140126_poooool")]
+    partial class poooool
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,9 +278,6 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("RelationTypeId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("Token")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -310,26 +310,7 @@ namespace R.Database.Migrations
 
                     b.HasIndex("ProvinceId");
 
-                    b.HasIndex("RelationTypeId");
-
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.RelationType", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("ItemValue")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("RelationType");
                 });
 
             modelBuilder.Entity("R.Database.Entities.UsersMessages", b =>
@@ -404,10 +385,6 @@ namespace R.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("R.Database.Entities.RelationType", "RelationType")
-                        .WithMany()
-                        .HasForeignKey("RelationTypeId");
-
                     b.Navigation("CarValue");
 
                     b.Navigation("Gender");
@@ -423,8 +400,6 @@ namespace R.Database.Migrations
                     b.Navigation("MarriageStatus");
 
                     b.Navigation("Province");
-
-                    b.Navigation("RelationType");
                 });
 #pragma warning restore 612, 618
         }

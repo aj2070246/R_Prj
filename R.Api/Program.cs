@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.DataProtection.Repositories;
 using R.Services.IServices;
 using R.Services.Services;
+using R.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddDbContext<RDbContext>(options =>
         );
 var app = builder.Build();
 
+//app.UseMiddleware<TokenValidationMiddleware>();
 
 //if (app.Environment.IsDevelopment())
 app.UseSwagger();
@@ -48,7 +50,7 @@ app.UseSwaggerUI();
 app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
-
+app.UseMiddleware<TokenValidationMiddleware>();
 app.MapControllers();
 
 app.Run();

@@ -22,7 +22,8 @@ namespace R.Api.Controllers
         [HttpPost("SearchUsers")]
         public ResultModel<List<GetOneUserData>> SearchUsers(SearchUsersInputModel model)
         {
-            return _service.SearchUsers(model);
+            var result = _service.SearchUsers(model); ;
+            return result;
         }
 
         [HttpPost("GetUserInfo")]

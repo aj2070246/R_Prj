@@ -20,6 +20,10 @@ namespace R.Database
         public DbSet<MarriageStatus> MarriageStatus { get; set; }
         public DbSet<LiveType> LiveType { get; set; }
         public DbSet<Gender> Gender { get; set; }
+        public DbSet<IncomeAmount> IncomeAmount { get; set; }
+        public DbSet<CarValue> CarValue { get; set; }
+        public DbSet<HomeValue> HomeValue { get; set; }
+        public DbSet<RelationType> RelationType { get; set; }
 
     }
 }

@@ -4,10 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-namespace R.Models.ViewModels
+namespace R.Models.ViewModels.DropDownItems
 
 {
-    public class GetAllProvinceModel
+    public class GetAllGenderModel
     {
         public long Id { get; set; }
         public string ItemValue { get; set; }
