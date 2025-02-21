@@ -24,6 +24,9 @@ namespace R.Database
         public DbSet<CarValue> CarValue { get; set; }
         public DbSet<HomeValue> HomeValue { get; set; }
         public DbSet<RelationType> RelationType { get; set; }
+        public DbSet<FavoriteDataLog> FavoriteDataLog { get; set; }
+        public DbSet<BlockedDataLog> BlockedDataLog { get; set; }
+        public DbSet<CheckMeActivityLogs> CheckMeActivityLogs { get; set; }
 
     }
 }

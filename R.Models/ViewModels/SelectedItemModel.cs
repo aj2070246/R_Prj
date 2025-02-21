@@ -10,5 +10,6 @@ namespace R.Models.ViewModels
     {
         public long? NumberId { get; set; }
         public string? StringId { get; set; }
+        public string? CurrentUserId { get; set; }
     }
 }

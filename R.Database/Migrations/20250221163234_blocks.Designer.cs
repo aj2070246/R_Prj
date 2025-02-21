@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using R.Database;
 
@@ -11,9 +12,11 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    partial class RDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250221163234_blocks")]
+    partial class blocks
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -37,32 +40,6 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Age");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("BlockedUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RUsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SourceUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RUsersId");
-
-                    b.ToTable("BlockedDataLog");
                 });
 
             modelBuilder.Entity("R.Database.Entities.Captcha", b =>
@@ -97,54 +74,6 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("CarValue");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.CheckMeActivityLogs", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RUsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId_CheckedMe")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RUsersId");
-
-                    b.ToTable("CheckMeActivityLogs");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.FavoriteDataLog", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("BlockedUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("DateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("RUsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("SourceUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("RUsersId");
-
-                    b.ToTable("FavoriteDataLog");
                 });
 
             modelBuilder.Entity("R.Database.Entities.Gender", b =>
@@ -437,27 +366,6 @@ namespace R.Database.Migrations
                     b.ToTable("UsersMessages");
                 });
 
-            modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>
-                {
-                    b.HasOne("R.Database.Entities.RUsers", null)
-                        .WithMany("BlockedDataLog")
-                        .HasForeignKey("RUsersId");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.CheckMeActivityLogs", b =>
-                {
-                    b.HasOne("R.Database.Entities.RUsers", null)
-                        .WithMany("CheckMeLogDataLog")
-                        .HasForeignKey("RUsersId");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.FavoriteDataLog", b =>
-                {
-                    b.HasOne("R.Database.Entities.RUsers", null)
-                        .WithMany("FavoriteDataLog")
-                        .HasForeignKey("RUsersId");
-                });
-
             modelBuilder.Entity("R.Database.Entities.RUsers", b =>
                 {
                     b.HasOne("R.Database.Entities.CarValue", "CarValue")
@@ -523,15 +431,6 @@ namespace R.Database.Migrations
                     b.Navigation("Province");
 
                     b.Navigation("RelationType");
-                });
-
-            modelBuilder.Entity("R.Database.Entities.RUsers", b =>
-                {
-                    b.Navigation("BlockedDataLog");
-
-                    b.Navigation("CheckMeLogDataLog");
-
-                    b.Navigation("FavoriteDataLog");
                 });
 #pragma warning restore 612, 618
         }

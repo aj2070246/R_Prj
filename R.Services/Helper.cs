@@ -38,5 +38,32 @@ namespace R.Services
             string persianDate = $"{year:0000}/{month:00}/{day:00} {hour:00}:{minute:00}";
             return persianDate;
         }
+        public static int Miladi2ShamsiYear(DateTime dateTime)
+        {
+            if (dateTime == null || dateTime == DateTime.MinValue)
+                return 0;
+            PersianCalendar persianCalendar = new PersianCalendar();
+
+            int year = persianCalendar.GetYear(dateTime);
+            return year;
+        }
+        public static int Miladi2ShamsiMonth(DateTime dateTime)
+        {
+            if (dateTime == null || dateTime == DateTime.MinValue)
+                return 0;
+            PersianCalendar persianCalendar = new PersianCalendar();
+
+            int year = persianCalendar.GetMonth(dateTime);
+            return year;
+        }
+        public static int Miladi2ShamsiDay(DateTime dateTime)
+        {
+            if (dateTime == null || dateTime == DateTime.MinValue)
+                return 0;
+            PersianCalendar persianCalendar = new PersianCalendar();
+
+            int year = persianCalendar.GetDayOfMonth(dateTime);
+            return year;
+        }
     }
 }

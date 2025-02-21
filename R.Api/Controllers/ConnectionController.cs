@@ -31,6 +31,12 @@ namespace R.Api.Controllers
         {
             return _service.GetUserInfo(model);
         }
+
+        [HttpPost("GetMyProfileInfo")]
+        public ResultModel<GetMyProfileInfoResultModel> GetMyProfileInfo(SelectedItemModel model)
+        {
+            return _service.GetMyProfileInfo(model);
+        }
         [HttpPost("DeleteMessage")]
         public ResultModel<bool> DeleteMessage(SelectedItemModel model)
         {
@@ -55,7 +61,17 @@ namespace R.Api.Controllers
             return _service.SendMessage(model);
         }
 
+        [HttpPost("BlockUserManager")]
+        public ResultModel<bool> BlockUserManager(BlockUserManagerInputModel model)
+        {
+            return _service.BlockUserManager(model);
+        }
 
+        [HttpPost("FavoriteUserManager")]
+        public ResultModel<bool> FavoriteUserManager(FavoriteUserManagerInputModel model)
+        {
+            return _service.FavoriteUserManager(model);
+        }
 
         [HttpPost("upload")]
         public async Task<IActionResult> UploadProfilePicture(UploadFileInputModel model)

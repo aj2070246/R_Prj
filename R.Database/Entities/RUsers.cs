@@ -43,7 +43,9 @@ namespace R.Database.Entities
         public RelationType? RelationType { get; set; }
         public long? RelationTypeId { get; set; }
 
-
+        public ICollection<BlockedDataLog> BlockedDataLog { get; set; }   //اینها مرا بلاک کرده ند 
+        public ICollection<FavoriteDataLog> FavoriteDataLog { get; set; } // من اینها را بلاک کرده م
+        public ICollection<CheckMeActivityLogs> CheckMeLogDataLog { get; set; }   //اینها مرا بلاک کرده ند 
 
         public string Mobile { get; set; }
         public string? MobileVerifyCode { get; set; }

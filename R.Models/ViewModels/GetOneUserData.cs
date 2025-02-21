@@ -26,5 +26,7 @@ namespace R.Models.ViewModels
         public string CarValue { get; set; } 
         public string HomeValue { get; set; }
         public string RelationType { get; set; }
+        public bool IsBlocked { get; set; }
+        public bool IsFavorite { get; set; }
     }
 }

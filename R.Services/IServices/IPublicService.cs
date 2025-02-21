@@ -22,5 +22,8 @@ namespace R.Services.IServices
         ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model);
         ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model);
         byte[] DownloadProfilePicture(string userId);
+        ResultModel<bool> BlockUserManager(BlockUserManagerInputModel model);
+        ResultModel<bool> FavoriteUserManager(FavoriteUserManagerInputModel model);
+        ResultModel<GetMyProfileInfoResultModel> GetMyProfileInfo(SelectedItemModel model);
     }
 }

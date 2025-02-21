@@ -96,6 +96,10 @@ namespace R.Services.Services
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
+            if (db.BlockedDataLog.Any(x => x.BlockedUserId == model.CurrentUserId && x.SourceUserId == model.StringId))
+                return new ResultModel<GetOneUserData>(false, "این کاربر شما را بلاک کرده است", 789);
+
+
             var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
                    .Include(x => x.Gender)
                     .Include(x => x.Province)
@@ -105,6 +109,7 @@ namespace R.Services.Services
                     .Include(x => x.CarValue)
                     .Include(x => x.HomeValue)
                     .Include(x => x.MarriageStatus).FirstOrDefault();
+
 
             if (user != null)
             {
@@ -126,13 +131,21 @@ namespace R.Services.Services
                     CarValue = user?.CarValue?.ItemValue == null ? "نامشخص" : user?.CarValue?.ItemValue,
                     HomeValue = user?.HomeValue?.ItemValue == null ? "نامشخص" : user?.HomeValue?.ItemValue,
                     RelationType = user?.RelationType?.ItemValue == null ? "نامشخص" : user?.RelationType?.ItemValue,
-                    
+
                 };
                 result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
                 result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
 
+                var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                result.IsBlocked = isBlocked;
+
+                var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                result.IsFavorite = isfavorite;
+
                 return new ResultModel<GetOneUserData>(result);
             }
+
+
             return new ResultModel<GetOneUserData>(false);
 
         }
@@ -540,6 +553,126 @@ namespace R.Services.Services
                 return user.ProfilePicture;
 
             return null;
+        }
+
+        public ResultModel<bool> BlockUserManager(BlockUserManagerInputModel model)
+        {
+            try
+            {
+                if (model.SetIsBlock)
+                {
+                    var oldLog = db.BlockedDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    if (oldLog != null)
+                        return new ResultModel<bool>(true, true);
+
+                    db.BlockedDataLog.Add(new BlockedDataLog()
+                    {
+                        BlockedUserId = model.DestinationUserId,
+                        SourceUserId = model.CurrentUserId,
+                        DateTime = DateTime.Now
+                    });
+                    db.SaveChanges();
+                }
+                else
+                {
+                    var oldLog = db.BlockedDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    if (oldLog == null)
+                        return new ResultModel<bool>(true, true);
+
+                    db.BlockedDataLog.Remove(oldLog);
+                    db.SaveChanges();
+                }
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false);
+            }
+        }
+
+        public ResultModel<bool> FavoriteUserManager(FavoriteUserManagerInputModel model)
+        {
+
+            try
+            {
+                if (model.SetIsFavorite)
+                {
+                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    if (oldLog != null)
+                        return new ResultModel<bool>(true, true);
+
+                    db.FavoriteDataLog.Add(new FavoriteDataLog()
+                    {
+                        BlockedUserId = model.DestinationUserId,
+                        SourceUserId = model.CurrentUserId
+                    });
+                    db.SaveChanges();
+                }
+                else
+                {
+                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    if (oldLog == null)
+                        return new ResultModel<bool>(true, true);
+
+                    db.FavoriteDataLog.Remove(oldLog);
+                    db.SaveChanges();
+                }
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false);
+            }
+        }
+
+        public ResultModel<GetMyProfileInfoResultModel> GetMyProfileInfo(SelectedItemModel model)
+        {
+            try
+            {
+                if(model.CurrentUserId==null)
+                    return new ResultModel<GetMyProfileInfoResultModel>(false);
+
+                var entity = db.Users.Where(x => x.Id == model.CurrentUserId).FirstOrDefault();
+
+
+                if (entity == null)
+                    return new ResultModel<GetMyProfileInfoResultModel>(false);
+
+                var user = new GetMyProfileInfoResultModel();
+
+                user.FirstName = entity.FirstName;
+                user.LastName = entity.LastName;
+                user.Mobile = entity.Mobile;
+                user.UserName = entity.UserName;
+                user.Password = entity.Password;
+                user.Id = entity.Id;
+                user.CarValue = entity.CarValueId;
+                user.HomeValue = entity.HomeValueId;
+                user.HealthStatus = entity.HealthStatusId;
+                user.IncomeAmount = entity.IncomeAmountId;
+                user.LiveType = entity.LiveTypeId;
+                user.RelationType = entity.RelationTypeId;
+                user.MarriageStatus = entity.MarriageStatusId;
+                user.Province = entity.ProvinceId;
+                user.MyDescription = entity.MyDescription;
+                user.EmailAddress = entity.EmailAddress;
+                user.RDescription = entity.RDescription;
+                user.LastActivityDate = Helper.Miladi2ShamsiWithTime(entity.LastActivityDate);
+                user.MemberDate = Helper.Miladi2ShamsiWithTime(entity.CreateUserDate);
+                user.Age = DateTime.Now.Year - entity.BirthDate.Year;
+                user.BirthDateYear = Helper.Miladi2ShamsiYear(entity.BirthDate);
+                user.BirthDateMonth = Helper.Miladi2ShamsiMonth(entity.BirthDate);
+                user.BirthDateDay = Helper.Miladi2ShamsiDay(entity.BirthDate);
+
+                return new ResultModel<GetMyProfileInfoResultModel>(user);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<GetMyProfileInfoResultModel>(false);
+            }
         }
     }
 }
