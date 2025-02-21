@@ -8,10 +8,10 @@ namespace R.Models.ViewModels
 {
     public class SearchUsersInputModel
     {
+        public string UserId { get; set; }
         public long PageIndex { get; set; }
         public long AgeIdFrom { get; set; }
         public long AgeIdTo { get; set; }
-        public long GenderId { get; set; }
         public long HealthStatusId { get; set; }
         public long LiveTypeId { get; set; }
         public long MarriageStatusId { get; set; }

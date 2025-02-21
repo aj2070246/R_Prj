@@ -113,18 +113,20 @@ namespace R.Services.Services
                 {
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Gender = user.Gender.ItemValue,
-                    HealthStatus = user.HealthStatus.ItemValue,
+                    Gender = user.Gender.ItemValue == null ? "نامشخص" : user?.Gender?.ItemValue,
+                    HealthStatus = user.HealthStatus.ItemValue == null ? "نامشخص" : user?.HealthStatus?.ItemValue,
                     Id = user.Id,
-                    LiveType = user.LiveType.ItemValue,
-                    MarriageStatus = user.MarriageStatus.ItemValue,
-                    MyDescription = user.MyDescription,
-                    Province = user.Province.ItemValue,
-                    RDescription = user.RDescription,
+                    LiveType = user.LiveType.ItemValue == null ? "نامشخص" : user?.LiveType?.ItemValue,
+                    MarriageStatus = user.MarriageStatus.ItemValue == null ? "نامشخص" : user?.MarriageStatus?.ItemValue,
+                    MyDescription = user.MyDescription == null ? "نامشخص" : user?.MyDescription,
+                    Province = user.Province.ItemValue == null ? "نامشخص" : user?.Province?.ItemValue,
+                    RDescription = user.RDescription == null ? "نامشخص" : user?.RDescription,
                     Age = age,
-                    IncomeAmount = user?.IncomeAmount?.ItemValue,
-                    CarValue = user?.CarValue?.ItemValue,
-                    HomeValue = user?.HomeValue?.ItemValue,
+                    IncomeAmount = user?.IncomeAmount?.ItemValue == null ? "نامشخص" : user?.IncomeAmount?.ItemValue,
+                    CarValue = user?.CarValue?.ItemValue == null ? "نامشخص" : user?.CarValue?.ItemValue,
+                    HomeValue = user?.HomeValue?.ItemValue == null ? "نامشخص" : user?.HomeValue?.ItemValue,
+                    RelationType = user?.RelationType?.ItemValue == null ? "نامشخص" : user?.RelationType?.ItemValue,
+                    
                 };
                 result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
                 result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
@@ -336,8 +338,9 @@ namespace R.Services.Services
             try
             {
 
-                string query = "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
-              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus," +
+                string query = $" declare  @genderId int = (select top 1 GenderId from Users where id='{model.UserId}')  " +
+                    Environment.NewLine + "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
+              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus, r.ItemValue RelationType ," +
               Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
               Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
               Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
@@ -347,8 +350,9 @@ namespace R.Services.Services
               Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
               Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
               Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
+              Environment.NewLine + " left  join RelationType r on r.Id = u.RelationTypeId" +
               Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId" +
-              Environment.NewLine + " where UserStatus=1 " + Environment.NewLine;
+              Environment.NewLine + " where UserStatus=1 and u.GenderId <> @genderId " + Environment.NewLine;
                 if (true)
                 {
                     if (model.ProvinceId != 0)
@@ -371,8 +375,10 @@ namespace R.Services.Services
 
                     if (model.IncomeId != 0)
                         query += $" {Environment.NewLine} and i.id = {model.IncomeId}";
+
                     if (model.CarValueId != 0)
                         query += $" {Environment.NewLine} and c.id = {model.CarValueId}";
+
                     if (model.HomeValueId != 0)
                         query += $" {Environment.NewLine} and ho.id = {model.HomeValueId}";
 
@@ -384,6 +390,7 @@ namespace R.Services.Services
                         else if (model.ProfilePhotoId == 2)
                             query += $" {Environment.NewLine} and u.ProfilePicture IS NULL ";
                     }
+
                     if (model.OnlineStatusId != 0)
                     {
                         if (model.OnlineStatusId == 1)
@@ -411,20 +418,21 @@ namespace R.Services.Services
                     user.Id = reader.GetString(reader.GetOrdinal("Id"));
                     user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
                     user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
-                    user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? null : reader.GetString(reader.GetOrdinal("MyDescription"));
-                    user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? null : reader.GetString(reader.GetOrdinal("RDescription"));
+                    user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
+                    user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
                     user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
                     user.Age = reader.GetInt32("age");
                     user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
-                    user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? null : reader.GetString(reader.GetOrdinal("HealthStatus"));
-                    user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? null : reader.GetString(reader.GetOrdinal("LiveType"));
+                    user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
+                    user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
                     user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
-                    user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+                    user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
 
-                    user.LastActivityDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
-                    user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
-                    user.CarValue = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
-                    user.HomeValue = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+                    user.LastActivityDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate")));
+                    user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
+                    user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
+                    user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
+                    user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
 
                     users.Add(user);
                 }

@@ -24,6 +24,7 @@ namespace R.Models.ViewModels
         public string LastActivityDate { get; set; } 
         public string IncomeAmount { get; set; } 
         public string CarValue { get; set; } 
-        public string HomeValue { get; set; } 
+        public string HomeValue { get; set; }
+        public string RelationType { get; set; }
     }
 }
