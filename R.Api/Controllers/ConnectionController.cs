@@ -34,7 +34,7 @@ namespace R.Api.Controllers
         [HttpPost("DeleteMessage")]
         public ResultModel<bool> DeleteMessage(SelectedItemModel model)
         {
-            return new ResultModel<bool>(true,true);
+            return new ResultModel<bool>(true, true);
         }
 
         [HttpPost("GetMyAllMessages")]
@@ -55,5 +55,41 @@ namespace R.Api.Controllers
             return _service.SendMessage(model);
         }
 
+
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> UploadProfilePicture(UploadFileInputModel model)
+        {
+
+
+            if (model.file == null || model.file.Length == 0)
+                return BadRequest("No file uploaded.");
+
+            using var memoryStream = new MemoryStream();
+            await model.file.CopyToAsync(memoryStream);
+            byte[] fileBytes = memoryStream.ToArray();
+           _service.UploadProfilePhoto(new ProfilePhotoModel
+            {
+                ProfilePhoto = fileBytes,
+                UserId = model.userId
+            });
+            return Ok(new { message = "opload ok"});
+        }
+
+
+        [HttpGet("downloadProfilePhoto")]
+        public async Task<IActionResult> DownloadProfilePicture(string userId)
+        {
+            var result = _service.DownloadProfilePicture(userId);
+            return File(result, "image/jpeg"); // یا image/png
+        }
+
     }
+    public class UploadFileInputModel
+    {
+        public IFormFile file { get; set; }
+        public string userId { get; set; }
+
+    }
+
 }

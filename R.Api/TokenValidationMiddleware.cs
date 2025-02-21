@@ -27,7 +27,7 @@ namespace R.Api
             var endpoint = context.GetEndpoint();
             if (endpoint != null)
             {
-                List<string> trustedActions = new List<string> { "login", "getcaptcha", "registeruser" , "GetAllDropDownsItems".ToLower() };
+                List<string> trustedActions = new List<string> { "login", "getcaptcha", "registeruser", "GetAllDropDownsItems".ToLower() };
                 var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
                 if (!trustedActions.Contains(actionName.ToLower()))
                 {
@@ -41,10 +41,20 @@ namespace R.Api
                         using (var scope = _scopeFactory.CreateScope())
                         {
                             var db = scope.ServiceProvider.GetRequiredService<RDbContext>();
-
                             var user = db.Users.FirstOrDefault(x => x.Id.ToLower() == userId && x.Token == token);
-                            user.TokenExpireDate = DateTime.Now.AddHours(1);
-                            user.LastActivityDate = DateTime.Now;
+
+                            if (user == null)
+                            {
+                                // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
+                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                await context.Response.WriteAsync("Token is invalid");
+                                return; // توقف پردازش درخواست
+                            }
+                            else
+                            {
+                                user.TokenExpireDate = DateTime.Now.AddHours(1);
+                                user.LastActivityDate = DateTime.Now;
+                            }
                             db.SaveChanges();
                         }
 

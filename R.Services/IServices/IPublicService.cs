@@ -13,6 +13,7 @@ namespace R.Services.IServices
     {
         public AllDropDownItems GetAllDropDownItems();
         ResultModel<LoginResultModel> login(LoginInputModel model);
+        byte[] UploadProfilePhoto(ProfilePhotoModel model);
         ResultModel<bool> RegisterUser(RegisterUserInputModel model);
         bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel);
         ResultModel<List<GetOneUserData>> SearchUsers(SearchUsersInputModel model);
@@ -20,5 +21,6 @@ namespace R.Services.IServices
         ResultModel<List<GetAllSentMessageResultModel>> GetMessagesWithOneUser(GetAllMessageInputModel model);
         ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model);
         ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model);
+        byte[] DownloadProfilePicture(string userId);
     }
 }

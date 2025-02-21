@@ -55,5 +55,8 @@ namespace R.Database.Entities
         public int EmailAddressStatusId { get; set; } // 1 = reg and not verift , 2 = send code , 3 = verified , 
         public string? EmailVerifyCode { get; set; }
         public DateTime? EmailVerifyCodeExpireDate { get; set; }
+
+        public byte[]? ProfilePicture { get; set; } // ذخیره عکس به صورت باینری
+
     }
 }

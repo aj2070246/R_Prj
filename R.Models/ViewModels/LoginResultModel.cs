@@ -28,5 +28,6 @@ namespace R.Models.ViewModels
         public string CarValue { get; set; }
         public string HomeValue { get; set; }
         public string LastActivityDate { get; set; }
+        public string? EmailAddress { get; set; }
     }
 }

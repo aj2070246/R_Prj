@@ -5,8 +5,10 @@ using System.Linq;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
+using Azure;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using R.Database;
 using R.Database.Entities;
 using R.Models;
@@ -95,18 +97,22 @@ namespace R.Services.Services
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
             var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
+                   .Include(x => x.Gender)
                     .Include(x => x.Province)
                     .Include(x => x.HealthStatus)
                     .Include(x => x.LiveType)
+                    .Include(x => x.IncomeAmount)
+                    .Include(x => x.CarValue)
+                    .Include(x => x.HomeValue)
                     .Include(x => x.MarriageStatus).FirstOrDefault();
 
             if (user != null)
             {
+                var age = DateTime.Now.Year - user.BirthDate.Year;
                 var result = new GetOneUserData()
                 {
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    BirthDate = user.BirthDate,
                     Gender = user.Gender.ItemValue,
                     HealthStatus = user.HealthStatus.ItemValue,
                     Id = user.Id,
@@ -114,9 +120,14 @@ namespace R.Services.Services
                     MarriageStatus = user.MarriageStatus.ItemValue,
                     MyDescription = user.MyDescription,
                     Province = user.Province.ItemValue,
-                    RDescription = user.RDescription
+                    RDescription = user.RDescription,
+                    Age = age,
+                    IncomeAmount = user?.IncomeAmount?.ItemValue,
+                    CarValue = user?.CarValue?.ItemValue,
+                    HomeValue = user?.HomeValue?.ItemValue,
                 };
-                result.Age = DateTime.Now.Year - result.BirthDate.Year;
+                result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
+                result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
 
                 return new ResultModel<GetOneUserData>(result);
             }
@@ -164,7 +175,6 @@ namespace R.Services.Services
                     .Include(x => x.IncomeAmount)
                     .Include(x => x.CarValue)
                     .Include(x => x.HomeValue)
-                    
                     .Include(x => x.MarriageStatus).FirstOrDefault();
 
 
@@ -191,7 +201,7 @@ namespace R.Services.Services
                     MarriageStatus = user.MarriageStatus.ItemValue,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    Token =token,
+                    Token = token,
                     Mobile = user.Mobile,
                     MyDescription = user.MyDescription,
                     RDescription = user.RDescription,
@@ -199,9 +209,8 @@ namespace R.Services.Services
                     IncomeAmount = user?.IncomeAmount?.ItemValue,
                     CarValue = user?.CarValue?.ItemValue,
                     HomeValue = user?.HomeValue?.ItemValue,
-
+                    EmailAddress = user.EmailAddress
                 };
-
 
                 loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                 loginResultModel.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
@@ -220,7 +229,7 @@ namespace R.Services.Services
 
             if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
                 return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
-           
+
             if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Mobile))
                 return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
 
@@ -249,19 +258,19 @@ namespace R.Services.Services
                 var douplicated = db.Users.Any(x => x.UserName.ToLower() == model.UserName.ToLower());
                 if (douplicated)
                     return new ResultModel<bool>(false, "نام کاربری به کاربر دیگری اختصاص یافته است");
-                
+
                 douplicated = db.Users.Any(x => x.Mobile.ToLower() == model.Mobile.ToLower());
                 if (douplicated)
                     return new ResultModel<bool>(false, "موبایل به کاربر دیگری اختصاص یافته است");
 
                 douplicated = db.Users.Any(x => x.EmailAddress.ToLower() == model.EmailAddress.ToLower());
-                if (douplicated) 
+                if (douplicated)
                     return new ResultModel<bool>(false, "پست الکترونیک به کاربر دیگری اختصاص یافته است");
 
 
                 var id = Guid.NewGuid().ToString();
                 var age = (DateTime.Now.Year - model.BirthDate.Year);
-      
+
                 db.Users.Add(new RUsers
                 {
                     Id = id,
@@ -327,35 +336,66 @@ namespace R.Services.Services
             try
             {
 
-                string query = "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age  , " +
-                    " p.ItemValue Province , h.ItemValue HealthStatus," +
-                    " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
-                    " inner join Province p on p.Id= u.ProvinceId" +
-                    " inner join HealthStatus h on h.Id = u.HealthStatusId" +
-                    " inner join LiveType l on l.Id = u.LiveTypeId" +
-                    " inner join MarriageStatus m on m.Id = u.MarriageStatusId" +
-                    " inner join gender g on g.Id = u.genderId" +
-                    " where 1=1";
-                if (false)
+                string query = "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
+              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus," +
+              Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
+              Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
+              Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
+              Environment.NewLine + " left  join HealthStatus h on h.Id = u.HealthStatusId" +
+              Environment.NewLine + " left  join LiveType l on l.Id = u.LiveTypeId" +
+              Environment.NewLine + " left  join MarriageStatus m on m.Id = u.MarriageStatusId" +
+              Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
+              Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
+              Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
+              Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId" +
+              Environment.NewLine + " where UserStatus=1 " + Environment.NewLine;
+                if (true)
                 {
                     if (model.ProvinceId != 0)
-                        query += $" and provinceId = {model.ProvinceId}";
+                        query += $" {Environment.NewLine} and provinceId = {model.ProvinceId}";
 
                     if (model.AgeIdTo != 0)
-                        query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) <= {model.AgeIdTo}";
+                        query += $" {Environment.NewLine} and DATEDIFF(YEAR, BirthDate, GETDATE()) <= {model.AgeIdTo}";
 
                     if (model.AgeIdFrom != 0)
-                        query += $" and DATEDIFF(YEAR, BirthDate, GETDATE()) >= {model.AgeIdFrom}";
+                        query += $"  {Environment.NewLine} and DATEDIFF(YEAR, BirthDate, GETDATE()) >= {model.AgeIdFrom}";
 
                     if (model.LiveTypeId != 0)
-                        query += $" and l.id = {model.LiveTypeId}";
+                        query += $" {Environment.NewLine} and l.id = {model.LiveTypeId}";
 
                     if (model.HealthStatusId != 0)
-                        query += $" and h.id = {model.HealthStatusId}";
+                        query += $" {Environment.NewLine} and h.id = {model.HealthStatusId}";
 
                     if (model.MarriageStatusId != 0)
-                        query += $" and m.id = {model.MarriageStatusId}";
+                        query += $" {Environment.NewLine} and m.id = {model.MarriageStatusId}";
+
+                    if (model.IncomeId != 0)
+                        query += $" {Environment.NewLine} and i.id = {model.IncomeId}";
+                    if (model.CarValueId != 0)
+                        query += $" {Environment.NewLine} and c.id = {model.CarValueId}";
+                    if (model.HomeValueId != 0)
+                        query += $" {Environment.NewLine} and ho.id = {model.HomeValueId}";
+
+                    if (model.ProfilePhotoId != 0)
+                    {
+                        if (model.ProfilePhotoId == 1)
+                            query += $" {Environment.NewLine} and u.ProfilePicture IS NOT NULL ";
+
+                        else if (model.ProfilePhotoId == 2)
+                            query += $" {Environment.NewLine} and u.ProfilePicture IS NULL ";
+                    }
+                    if (model.OnlineStatusId != 0)
+                    {
+                        if (model.OnlineStatusId == 1)
+                            query += $" {Environment.NewLine} and u.LastActivityDate >= DATEADD(MINUTE, -5, GETDATE()) ";
+
+                        else if (model.OnlineStatusId == 2)
+                            query += $" {Environment.NewLine}  and u.LastActivityDate >= DATEADD(MINUTE, 60 , GETDATE())";
+                    }
                 }
+
+                query += Environment.NewLine + " order by u.LastActivityDate desc ";
+
                 var connection = db.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -373,13 +413,18 @@ namespace R.Services.Services
                     user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
                     user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? null : reader.GetString(reader.GetOrdinal("MyDescription"));
                     user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? null : reader.GetString(reader.GetOrdinal("RDescription"));
-                    user.BirthDate = reader.GetDateTime(reader.GetOrdinal("BirthDate"));
+                    user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
                     user.Age = reader.GetInt32("age");
                     user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
                     user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? null : reader.GetString(reader.GetOrdinal("HealthStatus"));
                     user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? null : reader.GetString(reader.GetOrdinal("LiveType"));
                     user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
                     user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+
+                    user.LastActivityDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
+                    user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+                    user.CarValue = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
+                    user.HomeValue = reader.IsDBNull(reader.GetOrdinal("Province")) ? null : reader.GetString(reader.GetOrdinal("Province"));
 
                     users.Add(user);
                 }
@@ -466,6 +511,27 @@ namespace R.Services.Services
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)
         {
             throw new NotImplementedException();
+        }
+
+        public byte[] UploadProfilePhoto(ProfilePhotoModel model)
+        {
+            var user = db.Users.FirstOrDefault(x => x.Id == model.UserId);
+            if (user != null)
+            {
+                user.ProfilePicture = model.ProfilePhoto;
+                db.SaveChanges();
+                return DownloadProfilePicture(model.UserId);
+            }
+            return null;
+        }
+
+        public byte[] DownloadProfilePicture(string userId)
+        {
+            var user = db.Users.FirstOrDefault(x => x.Id == userId);
+            if (user != null)
+                return user.ProfilePicture;
+
+            return null;
         }
     }
 }

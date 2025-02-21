@@ -10,6 +10,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using R.Models;
 using R.Models.ViewModels.DropDownItems;
+using Microsoft.EntityFrameworkCore;
 namespace R.Api.Controllers
 {
     [ApiController]
