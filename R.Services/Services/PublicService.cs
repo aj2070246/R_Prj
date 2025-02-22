@@ -19,6 +19,7 @@ using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Security.Cryptography;
+using R.Models.ViewModels.BaseModels;
 
 namespace R.Services.Services
 {
@@ -31,6 +32,27 @@ namespace R.Services.Services
             db = context; // دریافت DbContext از طریق constructor injection
         }
 
+        private string BaseSearchQuery()
+        {
+            string query = $"";
+
+            query += Environment.NewLine + "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
+              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus, r.ItemValue RelationType ," +
+              Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
+              Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
+              Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
+              Environment.NewLine + " left  join HealthStatus h on h.Id = u.HealthStatusId" +
+              Environment.NewLine + " left  join LiveType l on l.Id = u.LiveTypeId" +
+              Environment.NewLine + " left  join MarriageStatus m on m.Id = u.MarriageStatusId" +
+              Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
+              Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
+              Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
+              Environment.NewLine + " left  join RelationType r on r.Id = u.RelationTypeId" +
+              Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId" +
+              Environment.NewLine + " where UserStatus=1  " + Environment.NewLine;
+
+            return query;
+        }
         public AllDropDownItems GetAllDropDownItems()
         {
             var result = new AllDropDownItems();
@@ -142,8 +164,16 @@ namespace R.Services.Services
                 var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
                 result.IsBlocked = isBlocked;
 
-                var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
                 result.IsFavorite = isfavorite;
+
+
+                db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
+                {
+                    RUsersId = model.StringId,
+                    UserId_CheckedMe = model.CurrentUserId
+                });
+                db.SaveChanges();
 
                 return new ResultModel<GetOneUserData>(result);
             }
@@ -428,22 +458,12 @@ namespace R.Services.Services
         {
             try
             {
+                string query = $" declare  @genderId int = (select top 1 GenderId from Users where id='{model.CurrentUserId}')  ";
 
-                string query = $" declare  @genderId int = (select top 1 GenderId from Users where id='{model.UserId}')  " +
-                    Environment.NewLine + "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
-              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus, r.ItemValue RelationType ," +
-              Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
-              Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
-              Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
-              Environment.NewLine + " left  join HealthStatus h on h.Id = u.HealthStatusId" +
-              Environment.NewLine + " left  join LiveType l on l.Id = u.LiveTypeId" +
-              Environment.NewLine + " left  join MarriageStatus m on m.Id = u.MarriageStatusId" +
-              Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
-              Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
-              Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
-              Environment.NewLine + " left  join RelationType r on r.Id = u.RelationTypeId" +
-              Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId" +
-              Environment.NewLine + " where UserStatus=1 and u.GenderId <> @genderId " + Environment.NewLine;
+                query = BaseSearchQuery();
+
+                query += "   and u.GenderId <> @genderId " + Environment.NewLine;
+
                 if (true)
                 {
                     if (model.ProvinceId != 0)
@@ -492,43 +512,7 @@ namespace R.Services.Services
                     }
                 }
 
-                query += Environment.NewLine + " order by u.LastActivityDate desc ";
-
-                var connection = db.Database.GetDbConnection();
-                using var command = connection.CreateCommand();
-                command.CommandText = query;
-                command.CommandType = CommandType.Text;
-                var users = new List<GetOneUserData>();
-                connection.Open();
-
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    var user = new GetOneUserData();
-
-                    user.Id = reader.GetString(reader.GetOrdinal("Id"));
-                    user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
-                    user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
-                    user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
-                    user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
-                    user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
-                    user.Age = reader.GetInt32("age");
-                    user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
-                    user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
-                    user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
-                    user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
-                    user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
-
-                    user.LastActivityDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate")));
-                    user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
-                    user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
-                    user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
-                    user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
-
-                    users.Add(user);
-                }
-
-                connection.Close(); // بستن کانکشن
+                var users = SerchQueryExecuter(query);
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
@@ -676,20 +660,20 @@ namespace R.Services.Services
             {
                 if (model.SetIsFavorite)
                 {
-                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.DestinationUserId);
                     if (oldLog != null)
                         return new ResultModel<bool>(true, true);
 
                     db.FavoriteDataLog.Add(new FavoriteDataLog()
                     {
-                        BlockedUserId = model.DestinationUserId,
+                        FavoritedUserId = model.DestinationUserId,
                         SourceUserId = model.CurrentUserId
                     });
                     db.SaveChanges();
                 }
                 else
                 {
-                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.DestinationUserId);
+                    var oldLog = db.FavoriteDataLog.FirstOrDefault(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.DestinationUserId);
                     if (oldLog == null)
                         return new ResultModel<bool>(true, true);
 
@@ -779,6 +763,48 @@ namespace R.Services.Services
 
         }
 
+        private List<GetOneUserData> SerchQueryExecuter(string query)
+        {
+
+            query += Environment.NewLine + " order by u.LastActivityDate desc ";
+            var connection = db.Database.GetDbConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+            command.CommandType = CommandType.Text;
+            var users = new List<GetOneUserData>();
+            connection.Open();
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var user = new GetOneUserData();
+
+                user.Id = reader.GetString(reader.GetOrdinal("Id"));
+                user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
+                user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
+                user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
+                user.Age = reader.GetInt32("age");
+                user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
+                user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
+                user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
+                user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
+                user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
+
+                user.LastActivityDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate")));
+                user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
+                user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
+                user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
+                user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
+
+                users.Add(user);
+            }
+
+            connection.Close(); // بستن کانکشن
+            return users;
+        }
+
         public ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword)
         {
 
@@ -832,6 +858,90 @@ namespace R.Services.Services
             {
                 return new ResultModel<bool>(false, false);
             }
+        }
+
+        public ResultModel<List<GetOneUserData>> GetBlockedUsers(BaseInputModel model)
+        {
+            try
+            {
+
+                string query = BaseSearchQuery();
+
+                query += $" and u.id  in (  select blockedUserId from [dbo].[BlockedDataLog] where SourceUserId='{model.CurrentUserId}'   )";
+                var users = SerchQueryExecuter(query);
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+                return new ResultModel<List<GetOneUserData>>(users);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false, "خطای دیتابیس");
+            }
+        }
+
+        public ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BaseInputModel model)
+        {
+
+            try
+            {
+                string query = BaseSearchQuery();
+
+                query += $" and u.id  in ( select  SourceUserId from [dbo].[BlockedDataLog] where blockedUserId='{model.CurrentUserId}'   )";
+                var users = SerchQueryExecuter(query);
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+                return new ResultModel<List<GetOneUserData>>(users);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false, "خطای دیتابیس");
+            }
+        }
+
+        public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BaseInputModel model)
+        {
+            string query = BaseSearchQuery();
+
+            query += $" and u.id  in (  select FavoritedUserId from [dbo].[BlockedDataLog] where SourceUserId='{model.CurrentUserId}'   )";
+            var users = SerchQueryExecuter(query);
+            if (users.Count() == 0)
+                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+            return new ResultModel<List<GetOneUserData>>(users);
+
+        }
+
+        public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BaseInputModel model)
+        {
+
+            string query = BaseSearchQuery();
+
+            query += $" and u.id  in ( select  SourceUserId from [dbo].[BlockedDataLog] where FavoritedUserId='{model.CurrentUserId}'   )";
+            var users = SerchQueryExecuter(query);
+            if (users.Count() == 0)
+                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+            return new ResultModel<List<GetOneUserData>>(users);
+
+        }
+
+
+        public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model)
+        {
+
+            string query = BaseSearchQuery();
+
+            query += $" and u.id  in ( select  UserId_CheckedMe from [dbo].[CheckMeActivityLogs] where RUsersId='{model.CurrentUserId}'   )";
+            var users = SerchQueryExecuter(query);
+            if (users.Count() == 0)
+                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+            return new ResultModel<List<GetOneUserData>>(users);
+
         }
     }
 }

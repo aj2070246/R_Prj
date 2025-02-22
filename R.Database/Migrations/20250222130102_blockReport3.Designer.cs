@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using R.Database;
 
@@ -11,9 +12,11 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    partial class RDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250222130102_blockReport3")]
+    partial class blockReport3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -447,13 +450,11 @@ namespace R.Database.Migrations
 
             modelBuilder.Entity("R.Database.Entities.CheckMeActivityLogs", b =>
                 {
-                    b.HasOne("R.Database.Entities.RUsers", "RUsers")
+                    b.HasOne("R.Database.Entities.RUsers", null)
                         .WithMany("CheckMeLogDataLog")
                         .HasForeignKey("RUsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("RUsers");
                 });
 
             modelBuilder.Entity("R.Database.Entities.FavoriteDataLog", b =>

@@ -3,13 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using R.Models.ViewModels.BaseModels;
 
 namespace R.Models.ViewModels
 {
-    public class SearchUsersInputModel
+    public class SearchUsersInputModel: BasePaginationModel
     {
-        public string UserId { get; set; }
-        public long PageIndex { get; set; }
         public long AgeIdFrom { get; set; }
         public long AgeIdTo { get; set; }
         public long HealthStatusId { get; set; }
