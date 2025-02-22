@@ -14,7 +14,9 @@ namespace R.Models.ViewModels
         public string LastName { get; set; }
         public string MyDescription { get; set; }
         public string RDescription { get; set; }
-        public string BirthDate { get; set; }
+        public string BirthDateYear { get; set; }
+        public string BirthDateMonth { get; set; }
+        public string BirthDateDay { get; set; }
         public int Age { get; set; }
         public string Gender { get; set; }
         public string HealthStatus { get; set; }
