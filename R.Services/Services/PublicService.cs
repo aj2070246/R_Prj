@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Net.Mail;
+using System.Net;
 using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +18,7 @@ using R.Models.ViewModels;
 using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+using System.Security.Cryptography;
 
 namespace R.Services.Services
 {
@@ -154,6 +157,11 @@ namespace R.Services.Services
         {
             try
             {
+
+                var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+                if (!captcharesult.IsSuccess)
+                    return new ResultModel<LoginResultModel>(false, "کد امنیتی اشتباه است");
+
                 if (string.IsNullOrEmpty(model.CaptchaValue) || string.IsNullOrEmpty(model.CaptchaId))
                     return new ResultModel<LoginResultModel>(false, "وارد کردن کد امنیتی اجباری است");
 
@@ -162,26 +170,6 @@ namespace R.Services.Services
                     return new ResultModel<LoginResultModel>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
 
 
-                if (model.CaptchaValue != "1" && model.CaptchaId != "1")
-                {
-                    if (string.IsNullOrEmpty(model.CaptchaValue) || string.IsNullOrEmpty(model.CaptchaId) || model.CaptchaValue == null || model.CaptchaId == null)
-                        return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
-
-                    var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == model.CaptchaId && x.CaptchaValue.ToLower() == model.CaptchaValue.ToLower());
-                    if (captchaResult != null)
-                    {
-                        if (DateTime.Now > captchaResult.ExpireDate)
-                        {
-                            db.Captchas.Remove(captchaResult);
-                            db.SaveChanges();
-
-                            return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
-                        }
-                    }
-                    else
-                        return new ResultModel<LoginResultModel>(false, "کد وارد شده صحیح نیست");
-
-                }
                 var user = db.Users.Where(x => x.UserName.ToLower() == model.UserName.ToLower() && x.Password == model.Password)
                     .Include(x => x.Gender)
                     .Include(x => x.Province)
@@ -250,26 +238,11 @@ namespace R.Services.Services
 
             try
             {
-                if (model.CaptchaValue != "1" || model.CaptchaId != "1")
-                {
-                    if (model.CaptchaValue == null || model.CaptchaId == null)
-                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+                var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+                if (!captcharesult.IsSuccess)
+                    return new ResultModel<bool>(false, "کد امنیتی اشتباه است");
 
-                    var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == model.CaptchaId && x.CaptchaValue == model.CaptchaValue);
-                    if (captchaResult != null)
-                    {
-                        if (DateTime.Now > captchaResult.ExpireDate)
-                        {
-                            db.Captchas.Remove(captchaResult);
-                            db.SaveChanges();
 
-                            return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-                        }
-                    }
-                    else
-                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-
-                }
                 var douplicated = db.Users.Any(x => x.UserName.ToLower() == model.UserName.ToLower());
                 if (douplicated)
                     return new ResultModel<bool>(false, "نام کاربری به کاربر دیگری اختصاص یافته است");
@@ -324,6 +297,111 @@ namespace R.Services.Services
                 return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException?.ToString());
 
             }
+        }
+
+        public ResultModel<bool> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword)
+        {
+            var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+            if (!captcharesult.IsSuccess)
+                return new ResultModel<bool>(false, "کد امنیتی اشتباه است");
+
+            var verifyCode = GenerateRandomNumber();
+            try
+            {
+                if (ForResetPassword)
+                {
+                    var user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                    var result = SendEmail(user.EmailAddress, verifyCode);
+                    if (result.IsSuccess)
+                    {
+                        user.EmailVerifyCode = verifyCode;
+                        user.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
+                        user.EmailAddressStatusId = 2;
+                        db.SaveChanges();
+                    }
+                    return result;
+                }
+                else // for verify Email
+                {
+                    var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                    var result = SendEmail(user.EmailAddress, verifyCode);
+                    if (result.IsSuccess)
+                    {
+                        user.EmailVerifyCode = verifyCode;
+                        user.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
+                        user.EmailAddressStatusId = 2;
+                        db.SaveChanges();
+                    }
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                return new ResultModel<bool>(false, false);
+            }
+
+        }
+
+        private string GenerateRandomNumber()
+        {
+            const string chars = "0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, 7)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private ResultModel<bool> SendEmail(string RecipientMail, string VerifyCode, string name = "همراه گرامی")
+        {
+            try
+            {
+                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
+                var fromAddress = new MailAddress("aj2070246@gmail.com", "یاریاب");
+                var toAddress = new MailAddress(RecipientMail, name);
+                const string fromPassword = "drfvhwsdickyslau"; // از App Password گوگل استفاده کنید
+                const string subject = "کد تایید ایمیل";
+
+                string body = "کد تایید ایمیل شما " +
+                   Environment.NewLine +
+                   VerifyCode +
+                    Environment.NewLine +
+                    "اعتبار تا" +
+                    Environment.NewLine +
+                    dateExpire;
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword),
+                    Timeout = 20000
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = false
+                })
+                {
+                    smtp.SendMailAsync(message);
+                    Console.WriteLine("Email sent successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            return new ResultModel<bool>(true, true);
+
         }
 
         public bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel)
@@ -631,7 +709,7 @@ namespace R.Services.Services
         {
             try
             {
-                if(model.CurrentUserId==null)
+                if (model.CurrentUserId == null)
                     return new ResultModel<GetMyProfileInfoResultModel>(false);
 
                 var entity = db.Users.Where(x => x.Id == model.CurrentUserId).FirstOrDefault();
@@ -672,6 +750,87 @@ namespace R.Services.Services
             catch (Exception e)
             {
                 return new ResultModel<GetMyProfileInfoResultModel>(false);
+            }
+        }
+
+        private ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
+        {
+            if (CaptchaValue != "1" && CaptchaId != "1")
+            {
+                if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)
+                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
+                var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == CaptchaId && x.CaptchaValue.ToLower() == CaptchaValue.ToLower());
+                if (captchaResult != null)
+                {
+                    if (DateTime.Now > captchaResult.ExpireDate)
+                    {
+                        db.Captchas.Remove(captchaResult);
+                        db.SaveChanges();
+
+                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+                    }
+                }
+                else
+                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
+            }
+            return new ResultModel<bool>(true, true);
+
+        }
+
+        public ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword)
+        {
+
+            try
+            {
+                if (ForResetPassword)
+                {
+                    var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+                    if (!captcharesult.IsSuccess)
+                        return new ResultModel<bool>(false, "کد امنیتی اشتباه است");
+
+                    var user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                    user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress &&
+                     x.EmailVerifyCode == model.EmailCode);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کد اشتباه وارد شده است");
+
+
+                    user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress &&
+                   x.EmailVerifyCode == model.EmailCode && x.EmailVerifyCodeExpireDate > DateTime.Now);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کد اعتبار سنجی منقضی شده است");
+
+                    user.Password = model.NewPassword;
+                    db.SaveChanges();
+                }
+                else // for verify Email
+                {
+                    var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
+                    if (user == null)
+                        return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+
+                    if (user.EmailVerifyCodeExpireDate < DateTime.Now)
+                        return new ResultModel<bool>(false, "کد اعتبار سنجی منقضی شده است");
+
+                    if (user.EmailVerifyCode != model.EmailCode)
+                        return new ResultModel<bool>(false, "کد وارد شده اشتباه است");
+
+
+                    user.EmailAddressStatusId = 3;
+                    db.SaveChanges();
+                }
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception ex)
+            {
+                return new ResultModel<bool>(false, false);
             }
         }
     }

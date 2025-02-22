@@ -11,6 +11,10 @@ using System.IO;
 using R.Models;
 using R.Models.ViewModels.DropDownItems;
 using Microsoft.EntityFrameworkCore;
+using SendGrid.Helpers.Mail;
+using SendGrid;
+using System.Net.Mail;
+using System.Net;
 namespace R.Api.Controllers
 {
     [ApiController]
@@ -32,6 +36,36 @@ namespace R.Api.Controllers
         {
             var result = _service.GetAllDropDownItems();
             return new ResultModel<AllDropDownItems>(result);
+        }
+     
+        [HttpPost("SendEmailVerifyCodeForResetPassword")]
+        public async Task<ResultModel<bool>> SendEmailVerifyCodeForResetPassword(SendEmailVerifyCodeInputModel model)
+        {
+            ResultModel<bool> result = _service.SendEmailVerifyCode(model,true);
+             
+            return new ResultModel<bool>(true,true);
+
+        }
+
+        [HttpPost("SendEmailVerifyCodeForVerify")]
+        public async Task<ResultModel<bool>> SendEmailVerifyCodeForVerify(SendEmailVerifyCodeInputModel model)
+        {
+            ResultModel<bool> result = _service.SendEmailVerifyCode(model, false);
+
+            return new ResultModel<bool>(true, true);
+        }
+
+        [HttpPost("VerifyEmailCodeForResetPassword")]
+        public ResultModel<bool> VerifyEmailCodeForResetPassword(CheckEmailVerifyCodeInputModel model)
+        {
+            ResultModel<bool> result = _service.VerifyEmailCode(model, true);
+            return result;
+        }
+        [HttpPost("VerifyEmailCodeForAcceptEmail")]
+        public async Task<ResultModel<bool>> VerifyEmailCodeForAcceptEmail(CheckEmailVerifyCodeInputModel model)
+        {
+            ResultModel<bool> result = _service.VerifyEmailCode(model, false);
+            return result;
         }
 
         [HttpPost("RegisterUser")]
