@@ -123,7 +123,7 @@ namespace R.Api.Controllers
             _service.UploadProfilePhoto(new ProfilePhotoModel
             {
                 ProfilePhoto = fileBytes,
-                UserId = model.userId
+                CurrentUserId = model.userId
             });
             return Ok(new { message = "opload ok" });
         }

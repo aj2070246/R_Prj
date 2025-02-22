@@ -1,8 +1,9 @@
-﻿namespace R.Models.ViewModels
+﻿using R.Models.ViewModels.BaseModels;
+
+namespace R.Models.ViewModels
 {
-    public class ProfilePhotoModel
+    public class ProfilePhotoModel:BaseInputModel
     {
-        public string UserId { get; set; }
         public byte[] ProfilePhoto { get; set; }
     }
 }

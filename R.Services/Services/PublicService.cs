@@ -32,27 +32,6 @@ namespace R.Services.Services
             db = context; // دریافت DbContext از طریق constructor injection
         }
 
-        private string BaseSearchQuery()
-        {
-            string query = $"";
-
-            query += Environment.NewLine + "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  " +
-              Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus, r.ItemValue RelationType ," +
-              Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
-              Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
-              Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
-              Environment.NewLine + " left  join HealthStatus h on h.Id = u.HealthStatusId" +
-              Environment.NewLine + " left  join LiveType l on l.Id = u.LiveTypeId" +
-              Environment.NewLine + " left  join MarriageStatus m on m.Id = u.MarriageStatusId" +
-              Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
-              Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
-              Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
-              Environment.NewLine + " left  join RelationType r on r.Id = u.RelationTypeId" +
-              Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId" +
-              Environment.NewLine + " where UserStatus=1  " + Environment.NewLine;
-
-            return query;
-        }
         public AllDropDownItems GetAllDropDownItems()
         {
             var result = new AllDropDownItems();
@@ -121,9 +100,6 @@ namespace R.Services.Services
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
-            if (db.BlockedDataLog.Any(x => x.BlockedUserId == model.CurrentUserId && x.SourceUserId == model.StringId))
-                return new ResultModel<GetOneUserData>(false, "این کاربر شما را بلاک کرده است", 789);
-
 
             var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
                    .Include(x => x.Gender)
@@ -378,62 +354,6 @@ namespace R.Services.Services
 
         }
 
-        private string GenerateRandomNumber()
-        {
-            const string chars = "0123456789";
-            Random random = new Random();
-            return new string(Enumerable.Repeat(chars, 7)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
-
-        private ResultModel<bool> SendEmail(string RecipientMail, string VerifyCode, string name = "همراه گرامی")
-        {
-            try
-            {
-                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
-                var fromAddress = new MailAddress("aj2070246@gmail.com", "یاریاب");
-                var toAddress = new MailAddress(RecipientMail, name);
-                const string fromPassword = "drfvhwsdickyslau"; // از App Password گوگل استفاده کنید
-                const string subject = "کد تایید ایمیل";
-
-                string body = "کد تایید ایمیل شما " +
-                   Environment.NewLine +
-                   VerifyCode +
-                    Environment.NewLine +
-                    "اعتبار تا" +
-                    Environment.NewLine +
-                    dateExpire;
-
-                var smtp = new SmtpClient
-                {
-                    Host = "smtp.gmail.com",
-                    Port = 587,
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword),
-                    Timeout = 20000
-                };
-
-                using (var message = new MailMessage(fromAddress, toAddress)
-                {
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = false
-                })
-                {
-                    smtp.SendMailAsync(message);
-                    Console.WriteLine("Email sent successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            return new ResultModel<bool>(true, true);
-
-        }
-
         public bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel)
         {
             try
@@ -598,12 +518,12 @@ namespace R.Services.Services
 
         public byte[] UploadProfilePhoto(ProfilePhotoModel model)
         {
-            var user = db.Users.FirstOrDefault(x => x.Id == model.UserId);
+            var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
             if (user != null)
             {
                 user.ProfilePicture = model.ProfilePhoto;
                 db.SaveChanges();
-                return DownloadProfilePicture(model.UserId);
+                return DownloadProfilePicture(model.CurrentUserId);
             }
             return null;
         }
@@ -737,74 +657,6 @@ namespace R.Services.Services
             }
         }
 
-        private ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
-        {
-            if (CaptchaValue != "1" && CaptchaId != "1")
-            {
-                if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)
-                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-
-                var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == CaptchaId && x.CaptchaValue.ToLower() == CaptchaValue.ToLower());
-                if (captchaResult != null)
-                {
-                    if (DateTime.Now > captchaResult.ExpireDate)
-                    {
-                        db.Captchas.Remove(captchaResult);
-                        db.SaveChanges();
-
-                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-                    }
-                }
-                else
-                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-
-            }
-            return new ResultModel<bool>(true, true);
-
-        }
-
-        private List<GetOneUserData> SerchQueryExecuter(string query)
-        {
-
-            query += Environment.NewLine + " order by u.LastActivityDate desc ";
-            var connection = db.Database.GetDbConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = query;
-            command.CommandType = CommandType.Text;
-            var users = new List<GetOneUserData>();
-            connection.Open();
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                var user = new GetOneUserData();
-
-                user.Id = reader.GetString(reader.GetOrdinal("Id"));
-                user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
-                user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
-                user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
-                user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
-                user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
-                user.Age = reader.GetInt32("age");
-                user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
-                user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
-                user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
-                user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
-                user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
-
-                user.LastActivityDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate")));
-                user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
-                user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
-                user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
-                user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
-
-                users.Add(user);
-            }
-
-            connection.Close(); // بستن کانکشن
-            return users;
-        }
-
         public ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword)
         {
 
@@ -906,7 +758,7 @@ namespace R.Services.Services
         {
             string query = BaseSearchQuery();
 
-            query += $" and u.id  in (  select FavoritedUserId from [dbo].[BlockedDataLog] where SourceUserId='{model.CurrentUserId}'   )";
+            query += $" and u.id  in (  select FavoritedUserId from [dbo].[FavoriteDataLog] where SourceUserId='{model.CurrentUserId}'   )";
             var users = SerchQueryExecuter(query);
             if (users.Count() == 0)
                 return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
@@ -920,7 +772,7 @@ namespace R.Services.Services
 
             string query = BaseSearchQuery();
 
-            query += $" and u.id  in ( select  SourceUserId from [dbo].[BlockedDataLog] where FavoritedUserId='{model.CurrentUserId}'   )";
+            query += $" and u.id  in ( select  SourceUserId from [dbo].[FavoriteDataLog] where FavoritedUserId='{model.CurrentUserId}'   )";
             var users = SerchQueryExecuter(query);
             if (users.Count() == 0)
                 return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
@@ -928,20 +780,181 @@ namespace R.Services.Services
             return new ResultModel<List<GetOneUserData>>(users);
 
         }
-
 
         public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model)
         {
 
-            string query = BaseSearchQuery();
+            string query = BaseSearchQuery(true);
+            query += $"  and rn=1  and ch.rUsersId='{model.CurrentUserId}' {Environment.NewLine} order by ch.datetime desc  ";
 
-            query += $" and u.id  in ( select  UserId_CheckedMe from [dbo].[CheckMeActivityLogs] where RUsersId='{model.CurrentUserId}'   )";
-            var users = SerchQueryExecuter(query);
+            var users = SerchQueryExecuter(query,true);
             if (users.Count() == 0)
                 return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
             return new ResultModel<List<GetOneUserData>>(users);
 
         }
+
+
+        #region private methods
+
+        private ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
+        {
+            if (CaptchaValue != "1" && CaptchaId != "1")
+            {
+                if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)
+                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
+                var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == CaptchaId && x.CaptchaValue.ToLower() == CaptchaValue.ToLower());
+                if (captchaResult != null)
+                {
+                    if (DateTime.Now > captchaResult.ExpireDate)
+                    {
+                        db.Captchas.Remove(captchaResult);
+                        db.SaveChanges();
+
+                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+                    }
+                }
+                else
+                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
+            }
+            return new ResultModel<bool>(true, true);
+
+        }
+
+        private string GenerateRandomNumber()
+        {
+            const string chars = "0123456789";
+            Random random = new Random();
+            return new string(Enumerable.Repeat(chars, 7)
+                .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+        private ResultModel<bool> SendEmail(string RecipientMail, string VerifyCode, string name = "همراه گرامی")
+        {
+            try
+            {
+                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
+                var fromAddress = new MailAddress("aj2070246@gmail.com", "یاریاب");
+                var toAddress = new MailAddress(RecipientMail, name);
+                const string fromPassword = "drfvhwsdickyslau"; // از App Password گوگل استفاده کنید
+                const string subject = "کد تایید ایمیل";
+
+                string body = "کد تایید ایمیل شما " +
+                   Environment.NewLine +
+                   VerifyCode +
+                    Environment.NewLine +
+                    "اعتبار تا" +
+                    Environment.NewLine +
+                    dateExpire;
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword),
+                    Timeout = 20000
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = false
+                })
+                {
+                    smtp.SendMailAsync(message);
+                    Console.WriteLine("Email sent successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+            }
+            return new ResultModel<bool>(true, true);
+
+        }
+        private string BaseSearchQuery(bool getMeLog = false)
+        {
+            string query = "";
+            if (getMeLog)
+                query += $"WITH RankedLogs AS (   SELECT *, ROW_NUMBER() OVER (PARTITION BY UserId_CheckedMe, RUsersId ORDER BY DateTime DESC) AS rn FROM CheckMeActivityLogs)";
+
+            query += Environment.NewLine + "SELECT     DATEDIFF(YEAR, BirthDate, GETDATE()) AS Age ,  ";
+
+            if (getMeLog)
+                query += " ch.DateTime ActivityDate, ";
+
+            query += Environment.NewLine + " p.ItemValue Province , h.ItemValue HealthStatus, r.ItemValue RelationType ," +
+              Environment.NewLine + " i.ItemValue IncomeAmount , c.ItemValue CarValue , ho.ItemValue HomeValue ," +
+              Environment.NewLine + " l.ItemValue LiveType , m.ItemValue MarriageStatus ,g.ItemValue  Gender,u.* FROM Users u" +
+              Environment.NewLine + " left  join Province p on p.Id= u.ProvinceId" +
+              Environment.NewLine + " left  join HealthStatus h on h.Id = u.HealthStatusId" +
+              Environment.NewLine + " left  join LiveType l on l.Id = u.LiveTypeId" +
+              Environment.NewLine + " left  join MarriageStatus m on m.Id = u.MarriageStatusId" +
+              Environment.NewLine + " left  join gender g on g.Id = u.genderId" +
+              Environment.NewLine + " left  join IncomeAmount i on i.Id = u.IncomeAmountId" +
+              Environment.NewLine + " left  join CarValue c on c.Id = u.CarValueId" +
+              Environment.NewLine + " left  join RelationType r on r.Id = u.RelationTypeId" +
+              Environment.NewLine + " left  join HomeValue ho on ho.Id = u.HomeValueId";
+
+            if (getMeLog)
+                query += Environment.NewLine + " left  join RankedLogs ch on u.Id = ch.UserId_CheckedMe";
+
+            query += Environment.NewLine + " where UserStatus=1  " + Environment.NewLine;
+
+            return query;
+        }
+
+        private List<GetOneUserData> SerchQueryExecuter(string query, bool getMeLog = false)
+        {
+
+            var connection = db.Database.GetDbConnection();
+            using var command = connection.CreateCommand();
+            command.CommandText = query;
+            command.CommandType = CommandType.Text;
+            var users = new List<GetOneUserData>();
+            connection.Open();
+
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var user = new GetOneUserData();
+
+                user.Id = reader.GetString(reader.GetOrdinal("Id"));
+                user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
+                user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
+                user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
+                user.Age = reader.GetInt32("age");
+                user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
+                user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
+                user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
+                user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
+                user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
+                user.LastActivityDate = !reader.IsDBNull(reader.GetOrdinal("LastActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate"))) : "نامشخص"; // مقدار جایگزین
+                user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
+                user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
+                user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
+                user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
+              
+                if (getMeLog)
+                    user.ActivityDate = !reader.IsDBNull(reader.GetOrdinal("ActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("ActivityDate"))) : "نامشخص"; // مقدار جایگزین
+
+                users.Add(user);
+            }
+
+            connection.Close(); // بستن کانکشن
+            return users;
+        }
+
+
+        #endregion
     }
 }
