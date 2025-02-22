@@ -12,6 +12,7 @@ namespace R.Database.Entities
         public CheckMeActivityLogs()
         {
             Id = Guid.NewGuid().ToString(); 
+            DateTime= DateTime.Now;
         }
 
         [Key] 
@@ -19,5 +20,7 @@ namespace R.Database.Entities
 
         public DateTime DateTime { get; set; }
         public string UserId_CheckedMe { get; set; }
+        public string RUsersId { get; set; }
+        public RUsers RUsers { get; set; }
     }
 }

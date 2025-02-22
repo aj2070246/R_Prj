@@ -19,6 +19,6 @@ namespace R.Database.Entities
 
         public DateTime DateTime { get; set; }
         public string SourceUserId { get; set; }
-        public string BlockedUserId { get; set; }
+        public string FavoritedUserId { get; set; }
     }
 }
