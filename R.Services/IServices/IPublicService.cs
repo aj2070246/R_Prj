@@ -36,5 +36,6 @@ namespace R.Services.IServices
         ResultModel<bool> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword);
         ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword);
         ResultModel<bool> ChangePassword(ChangePasswordInputModel model);
+        ResultModel<bool> DeleteMessage(SelectedItemModel model);
     }
 }

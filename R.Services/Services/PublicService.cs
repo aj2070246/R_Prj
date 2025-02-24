@@ -20,6 +20,7 @@ using R.Services.IServices;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 using System.Security.Cryptography;
 using R.Models.ViewModels.BaseModels;
+using Microsoft.IdentityModel.Abstractions;
 
 namespace R.Services.Services
 {
@@ -477,26 +478,37 @@ namespace R.Services.Services
             try
             {
 
-                var senderUser = db.Users.FirstOrDefault(x => x.Id == model.SenderUserId);
-                var receiverUser = db.Users.FirstOrDefault(x => x.Id == model.ReceiverUserId);
+                var senderUser = db.Users.Find(model.SenderUserId);
+                var receiverUser = db.Users.Find(model.ReceiverUserId);
 
-                var sentMessage = db.UsersMessages
+                var temp = db.UsersMessages
                     .Where(
-                    x => (x.SenderUserId == model.SenderUserId && x.ReceiverUserId == model.ReceiverUserId) ||
+                    x => ((x.SenderUserId == model.SenderUserId && x.ReceiverUserId == model.ReceiverUserId) ||
                     (x.SenderUserId == model.ReceiverUserId && x.ReceiverUserId == model.SenderUserId))
-                    .Select(x => new GetAllSentMessageResultModel
-                    {
-                        Id = x.Id,
-                        IsReceiveMessage = false,
-                        SendDate = x.SendDate,
-                        SenderUserId = x.SenderUserId,
-                        ReceiverUserId = x.ReceiverUserId,
-                        MessageStatusId = x.MessageStatusId,
-                        MessageStatus = x.SenderUserId == model.SenderUserId ? "ارسال شده" : "دریافت شده",
-                        MessageText = x.MessageText,
-                        ReceiverUserFullName = receiverUser.FirstName + "  " + receiverUser.LastName,
-                        SenderUserFullName = senderUser.FirstName + "  " + senderUser.LastName,
-                    }).ToList();
+                    && (x.MessageStatusId == 1 || x.MessageStatusId == 2));
+                var sentMessage = temp.Select(x => new GetAllSentMessageResultModel
+                {
+                    Id = x.Id,
+                    IsReceiveMessage = false,
+                    SendDate = x.SendDate,
+                    SenderUserId = x.SenderUserId,
+                    ReceiverUserId = x.ReceiverUserId,
+                    MessageStatusId = x.MessageStatusId,
+                    MessageStatus = x.SenderUserId == model.SenderUserId ? "ارسال شده" : "دریافت شده",
+                    MessageText = x.MessageText,
+                    ReceiverUserFullName = receiverUser.FirstName + "  " + receiverUser.LastName,
+                    SenderUserFullName = senderUser.FirstName + "  " + senderUser.LastName,
+                }).ToList();
+
+                string query = $" update UsersMessages set MessageStatusId =2 where SenderUserId ='{model.SenderUserId}' and ReceiverUserId = '{model.ReceiverUserId}' ";
+
+                using var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                connection.Open();
+                command.ExecuteReader();
+                connection.Close();
 
                 if (!sentMessage.Any())
                     return new ResultModel<List<GetAllSentMessageResultModel>>(false, "گفتگویی یافت نشد . برای شروع گفاگو مسیچ ارسال کنید");
@@ -1014,6 +1026,28 @@ namespace R.Services.Services
             user.Password = model.NewPassword;
             db.SaveChanges();
 
+            return new ResultModel<bool>(true, true);
+
+        }
+
+        public ResultModel<bool> DeleteMessage(SelectedItemModel model)
+        {
+            try
+            {
+                string query = $" update UsersMessages set MessageStatusId =3 where Id='{model.StringId}' ";
+
+                using var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                connection.Open();
+                command.ExecuteReader();
+                connection.Close();
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false);
+            }
             return new ResultModel<bool>(true, true);
 
         }

@@ -14,6 +14,6 @@ namespace R.Database.Entities
         public string ReceiverUserId { get; set; } 
         public string MessageText { get; set; }
         public DateTime SendDate { get; set; }
-        public int MessageStatusId { get; set; } 
+        public int MessageStatusId { get; set; } // 1 = sent , 2 read , 3 deleted
     }
 }

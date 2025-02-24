@@ -76,7 +76,7 @@ namespace R.Api.Controllers
         [HttpPost("DeleteMessage")]
         public ResultModel<bool> DeleteMessage(SelectedItemModel model)
         {
-            return new ResultModel<bool>(true, true);
+            return _service.DeleteMessage(model);
         }
 
         [HttpPost("GetMyAllMessages")]
