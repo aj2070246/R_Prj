@@ -132,10 +132,16 @@ namespace R.Services.Services
                         CarValue = user?.CarValue?.ItemValue == null ? "نامشخص" : user?.CarValue?.ItemValue,
                         HomeValue = user?.HomeValue?.ItemValue == null ? "نامشخص" : user?.HomeValue?.ItemValue,
                         RelationType = user?.RelationType?.ItemValue == null ? "نامشخص" : user?.RelationType?.ItemValue,
-
+                        Ghad = user.Ghad,
+                        Vazn = user.Vazn,
+                        CheildCount = user.CheildCount,
+                        FirstCheildAge = user.FirstCheildAge,
+                        ZibaeeNumber = user.ZibaeeNumber,
+                        TipNUmber = user.TipNUmber,
                     };
                     result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
                     result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
+                    result.RangePoost = GetRangePoost(user.RangePoost);
 
                     var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
                     result.IsBlocked = isBlocked;
@@ -164,6 +170,19 @@ namespace R.Services.Services
 
         }
 
+        private string GetRangePoost(int Id)
+        {
+            if (Id == 1)
+                return "سفید";
+            if (Id == 2)
+                return "برنزه";
+            if (Id == 3)
+                return "سیاه";
+            if (Id == 4)
+                return "بور";
+
+            return "نامشخص";
+        }
         public ResultModel<LoginResultModel> login(LoginInputModel model)
         {
             try
@@ -342,7 +361,7 @@ namespace R.Services.Services
                     return new ResultModel<bool>(false, "پست الکترونیک به کاربر دیگری اختصاص یافته است");
 
                 var user = db.Users.Find(model.CurrentUserId);
-                if (user==null)
+                if (user == null)
                     return new ResultModel<bool>(false, "کاربر یافت نشد");
 
                 user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
@@ -797,7 +816,13 @@ namespace R.Services.Services
                 user.BirthDateYear = Helper.Miladi2ShamsiYear(entity.BirthDate);
                 user.BirthDateMonth = Helper.Miladi2ShamsiMonth(entity.BirthDate);
                 user.BirthDateDay = Helper.Miladi2ShamsiDay(entity.BirthDate);
-
+                user.Ghad = entity.Ghad;
+                user.Vazn = entity.Vazn;
+                user.CheildCount = entity.CheildCount;
+                user.FirstCheildAge = entity.FirstCheildAge;
+                user.ZibaeeNumber = entity.ZibaeeNumber;
+                user.TipNUmber = entity.TipNUmber;
+                user.RangePoost = entity.RangePoost;
                 return new ResultModel<GetMyProfileInfoResultModel>(user);
 
             }

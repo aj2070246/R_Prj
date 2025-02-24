@@ -29,12 +29,12 @@ namespace R.Models.ViewModels
         public string RelationType { get; set; }
         public bool IsBlocked { get; set; }
         public bool IsFavorite { get; set; }
-        public string Ghad { get; set; }
-        public string Vazn { get; set; }
+        public int  Ghad { get; set; }
+        public int Vazn { get; set; }
+        public int CheildCount { get; set; }
+        public int FirstCheildAge { get; set; }
+        public int ZibaeeNumber { get; set; }
+        public int TipNUmber { get; set; }
         public string RangePoost { get; set; }
-        public string CheildCount { get; set; }
-        public string FirstCheildAge { get; set; }
-        public string ZibaeeNumber { get; set; }
-        public string TipNUmber { get; set; }
     }
 }
