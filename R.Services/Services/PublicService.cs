@@ -516,18 +516,18 @@ namespace R.Services.Services
             try
             {
                 string query = $"with UnreadMessages as("
-        + "SELECT     ReceiverUserId,    SenderUserId, MAX(SendDate) AS LastReceivedMessageDate,"
+        + " SELECT     ReceiverUserId,    SenderUserId, MAX(SendDate) AS LastReceivedMessageDate,"
         + "    COUNT(CASE WHEN MessageStatusId = 1 THEN 1 END) AS UnreadMessagesCount"
-        + "FROM UsersMessages"
-        + $"where ReceiverUserId='{model.CurrentUserId}'"
-        + "GROUP BY ReceiverUserId, SenderUserId"
-        + ")"
-        + "select  CONCAT( uS.FirstName , ' ' , uS.LastName) sender ,"
-        + "CONCAT( uR.FirstName , ' ' , uR.LastName) receiver, UnreadMessages.*"
-        + "from UnreadMessages"
-        + "inner join Users uS on uS.Id= SenderUserId"
-        + "inner join Users uR on uR.Id= ReceiverUserId"
-        + "ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
+        + " FROM UsersMessages"
+        + $" where ReceiverUserId='{model.CurrentUserId}'"
+        + " GROUP BY ReceiverUserId, SenderUserId"
+        + " )"
+        + " select  CONCAT( uS.FirstName , ' ' , uS.LastName) sender ,"
+        + " CONCAT( uR.FirstName , ' ' , uR.LastName) receiver, UnreadMessages.*"
+        + " from UnreadMessages"
+        + " inner join Users uS on uS.Id= SenderUserId"
+        + " inner join Users uR on uR.Id= ReceiverUserId"
+        + " ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
 
 
 
@@ -545,8 +545,8 @@ namespace R.Services.Services
 
                     msg.SenderUserId = reader.GetString(reader.GetOrdinal("SenderUserId"));
                     msg.SenderName = reader.GetString(reader.GetOrdinal("sender"));
-                    msg.UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("LastName"));
-                    msg.LastReceivedMessageDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("LastReceivedMessageDate")));
+                    msg.UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("UnreadMessagesCount"));
+                    msg.LastReceivedMessageDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastReceivedMessageDate")));
 
                     msgs.Add(msg);
                 }
