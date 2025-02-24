@@ -109,6 +109,13 @@ namespace R.Api.Controllers
             return _service.FavoriteUserManager(model);
         }
 
+        [HttpPost("ChangePassword")]
+        public ResultModel<bool> ChangePassword(ChangePasswordInputModel model)
+        {
+            return _service.ChangePassword(model);
+        }
+
+
         [HttpPost("upload")]
         public async Task<IActionResult> UploadProfilePicture(UploadFileInputModel model)
         {

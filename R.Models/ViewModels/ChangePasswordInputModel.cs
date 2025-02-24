@@ -7,9 +7,9 @@ using R.Models.ViewModels.BaseModels;
 
 namespace R.Models.ViewModels
 {
-    public class SelectedItemModel:BaseInputModel
+    public class ChangePasswordInputModel : BaseInputModel
     {
-        public long? NumberId { get; set; }
-        public string? StringId { get; set; }
+        public string CurrentPassword { get; set; }
+        public string NewPassword { get; set; }
     }
 }

@@ -380,7 +380,7 @@ namespace R.Services.Services
             {
                 string query = $" declare  @genderId int = (select top 1 GenderId from Users where id='{model.CurrentUserId}')  ";
 
-                query = BaseSearchQuery();
+                query += BaseSearchQuery();
 
                 query += "   and u.GenderId <> @genderId " + Environment.NewLine;
 
@@ -513,7 +513,52 @@ namespace R.Services.Services
 
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)
         {
-            throw new NotImplementedException();
+            try
+            {
+                string query = $"with UnreadMessages as("
+        + "SELECT     ReceiverUserId,    SenderUserId, MAX(SendDate) AS LastReceivedMessageDate,"
+        + "    COUNT(CASE WHEN MessageStatusId = 1 THEN 1 END) AS UnreadMessagesCount"
+        + "FROM UsersMessages"
+        + $"where ReceiverUserId='{model.CurrentUserId}'"
+        + "GROUP BY ReceiverUserId, SenderUserId"
+        + ")"
+        + "select  CONCAT( uS.FirstName , ' ' , uS.LastName) sender ,"
+        + "CONCAT( uR.FirstName , ' ' , uR.LastName) receiver, UnreadMessages.*"
+        + "from UnreadMessages"
+        + "inner join Users uS on uS.Id= SenderUserId"
+        + "inner join Users uR on uR.Id= ReceiverUserId"
+        + "ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
+
+
+
+                var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                var msgs = new List<GetMyAllMessagesResultModel>();
+                connection.Open();
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var msg = new GetMyAllMessagesResultModel();
+
+                    msg.SenderUserId = reader.GetString(reader.GetOrdinal("SenderUserId"));
+                    msg.SenderName = reader.GetString(reader.GetOrdinal("sender"));
+                    msg.UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("LastName"));
+                    msg.LastReceivedMessageDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("LastReceivedMessageDate")));
+
+                    msgs.Add(msg);
+                }
+
+                connection.Close();
+                return new ResultModel<List<GetMyAllMessagesResultModel>>(msgs);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetMyAllMessagesResultModel>>(false);
+            }
         }
 
         public byte[] UploadProfilePhoto(ProfilePhotoModel model)
@@ -787,7 +832,7 @@ namespace R.Services.Services
             string query = BaseSearchQuery(true);
             query += $"  and rn=1  and ch.rUsersId='{model.CurrentUserId}' {Environment.NewLine} order by ch.datetime desc  ";
 
-            var users = SerchQueryExecuter(query,true);
+            var users = SerchQueryExecuter(query, true);
             if (users.Count() == 0)
                 return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
@@ -943,7 +988,7 @@ namespace R.Services.Services
                 user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
                 user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
                 user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
-              
+
                 if (getMeLog)
                     user.ActivityDate = !reader.IsDBNull(reader.GetOrdinal("ActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("ActivityDate"))) : "نامشخص"; // مقدار جایگزین
 
@@ -952,6 +997,25 @@ namespace R.Services.Services
 
             connection.Close(); // بستن کانکشن
             return users;
+        }
+
+        public ResultModel<bool> ChangePassword(ChangePasswordInputModel model)
+        {
+            if (string.IsNullOrEmpty(model.NewPassword) || string.IsNullOrEmpty(model.CurrentPassword))
+                return new ResultModel<bool>(false, "وارد کردن کلمه عبور و تکرار آن اجباری است");
+
+            var user = db.Users.Find(model.CurrentUserId);
+            if (user == null)
+                return new ResultModel<bool>(false, "کاربری یافت نشد");
+
+            if (user.Password != model.CurrentPassword)
+                return new ResultModel<bool>(false, "کلمه عبور فعلی خود را اشتباه وارد کرده اید");
+
+            user.Password = model.NewPassword;
+            db.SaveChanges();
+
+            return new ResultModel<bool>(true, true);
+
         }
 
 
