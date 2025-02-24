@@ -12,4 +12,37 @@ namespace R.Models.ViewModels.DropDownItems
         public string ItemValue { get; set; }
 
     }
+
+    public class GetAllGhad
+    {
+        public long Id { get; set; }
+        public string ItemValue { get; set; }
+
+    }
+
+    public class GetAllVazn
+    {
+        public long Id { get; set; }
+        public string ItemValue { get; set; }
+
+    }
+    public class GetAllRangePoost
+    {
+        public long Id { get; set; }
+        public string ItemValue { get; set; }
+
+    }
+    public class GetAllCheildCount
+    {
+        public long Id { get; set; }
+        public string ItemValue { get; set; }
+
+    }
+
+    public class GetAllFirstCheildAge
+    {
+        public long Id { get; set; }
+        public string ItemValue { get; set; }
+
+    }
 }

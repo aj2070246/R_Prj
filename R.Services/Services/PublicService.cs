@@ -9,6 +9,8 @@ using R.Models.ViewModels;
 using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
 using R.Models.ViewModels.BaseModels;
+using System.Numerics;
+using Microsoft.IdentityModel.Abstractions;
 
 namespace R.Services.Services
 {
@@ -294,9 +296,83 @@ namespace R.Services.Services
                     IncomeAmountId = model.IncomeAmount,
                     HomeValueId = model.HomeValue,
                     CarValueId = model.CarValue,
-                    RelationTypeId = model.RelationType
-
+                    RelationTypeId = model.RelationType,
+                    Ghad = model.Ghad,
+                    Vazn = model.Vazn,
+                    RangePoost = model.RangePoost,
+                    CheildCount = model.CheildCount,
+                    FirstCheildAge = model.FirstCheildAge,
+                    ZibaeeNumber = model.ZibaeeNumber,
+                    TipNUmber = model.TipNUmber,
                 });
+                db.SaveChanges();
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException?.ToString());
+
+            }
+        }
+
+
+        public ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model)
+        {
+
+            if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
+                return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
+
+            if (string.IsNullOrEmpty(model.EmailAddress) || string.IsNullOrEmpty(model.Mobile))
+                return new ResultModel<bool>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
+
+            try
+            {
+
+                var douplicated = db.Users.Where(x => x.Id != model.CurrentUserId).Any(x => x.UserName.ToLower() == model.UserName.ToLower());
+                if (douplicated)
+                    return new ResultModel<bool>(false, "نام کاربری به کاربر دیگری اختصاص یافته است");
+
+                douplicated = db.Users.Where(x => x.Id != model.CurrentUserId).Any(x => x.Mobile.ToLower() == model.Mobile.ToLower());
+                if (douplicated)
+                    return new ResultModel<bool>(false, "موبایل به کاربر دیگری اختصاص یافته است");
+
+                douplicated = db.Users.Where(x => x.Id != model.CurrentUserId).Any(x => x.EmailAddress.ToLower() == model.EmailAddress.ToLower());
+                if (douplicated)
+                    return new ResultModel<bool>(false, "پست الکترونیک به کاربر دیگری اختصاص یافته است");
+
+                var user = db.Users.Find(model.CurrentUserId);
+                if (user==null)
+                    return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
+                user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
+                user.FirstName = model.FirstName;
+                user.LastName = model.LastName;
+                user.Password = model.Password;
+                user.UserName = model.UserName;
+                user.RDescription = model.RDescription;
+                user.MyDescription = model.MyDescription;
+                user.ProvinceId = model.Province;
+                user.GenderId = model.Gender;
+                user.LiveTypeId = model.LiveType;
+                user.HealthStatusId = model.HealtStatus;
+                user.MarriageStatusId = model.MarriageStatus;
+                user.BirthDate = model.BirthDate;
+                user.Mobile = model.Mobile;
+                user.EmailAddress = model.EmailAddress;
+                user.IncomeAmountId = model.IncomeAmount;
+                user.HomeValueId = model.HomeValue;
+                user.CarValueId = model.CarValue;
+                user.RelationTypeId = model.RelationType;
+                user.Ghad = model.Ghad;
+                user.Vazn = model.Vazn;
+                user.RangePoost = model.RangePoost;
+                user.CheildCount = model.CheildCount;
+                user.FirstCheildAge = model.FirstCheildAge;
+                user.ZibaeeNumber = model.ZibaeeNumber;
+                user.TipNUmber = model.TipNUmber;
+
                 db.SaveChanges();
                 return new ResultModel<bool>(true, true);
 
@@ -591,7 +667,7 @@ namespace R.Services.Services
             catch (Exception e)
             {
                 return null;
-                
+
             }
         }
 

@@ -16,6 +16,7 @@ namespace R.Services.IServices
         ResultModel<LoginResultModel> login(LoginInputModel model);
         byte[] UploadProfilePhoto(ProfilePhotoModel model);
         ResultModel<bool> RegisterUser(RegisterUserInputModel model);
+        ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model);
         bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel);
 
         ResultModel<List<GetOneUserData>> SearchUsers(SearchUsersInputModel model);
