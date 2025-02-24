@@ -37,5 +37,6 @@ namespace R.Services.IServices
         ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword);
         ResultModel<bool> ChangePassword(ChangePasswordInputModel model);
         ResultModel<bool> DeleteMessage(SelectedItemModel model);
+        ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model);
     }
 }

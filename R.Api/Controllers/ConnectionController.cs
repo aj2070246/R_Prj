@@ -77,6 +77,11 @@ namespace R.Api.Controllers
         public ResultModel<bool> DeleteMessage(SelectedItemModel model)
         {
             return _service.DeleteMessage(model);
+        }   
+        [HttpPost("GetCountOfUnreadMessages")]
+        public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
+        {
+            return _service.GetCountOfUnreadMessages(model);
         }
 
         [HttpPost("GetMyAllMessages")]

@@ -1,26 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
+﻿using System.Data;
 using System.Net.Mail;
 using System.Net;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
-using Azure;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using R.Database;
 using R.Database.Entities;
 using R.Models;
 using R.Models.ViewModels;
 using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
-using System.Security.Cryptography;
 using R.Models.ViewModels.BaseModels;
-using Microsoft.IdentityModel.Abstractions;
 
 namespace R.Services.Services
 {
@@ -35,128 +23,142 @@ namespace R.Services.Services
 
         public AllDropDownItems GetAllDropDownItems()
         {
-            var result = new AllDropDownItems();
-
-            result.IncomeAmount = db.IncomeAmount.Select(x => new GetAllIncomeAmountModel()
+            try
             {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                var result = new AllDropDownItems();
 
-            result.CarValue = db.CarValue.Select(x => new GetAllCarValueModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.IncomeAmount = db.IncomeAmount.Select(x => new GetAllIncomeAmountModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.HomeValue = db.HomeValue.Select(x => new GetAllHomeValueModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.CarValue = db.CarValue.Select(x => new GetAllCarValueModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.Provinces = db.Province.Select(x => new GetAllProvinceModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
-            result.RelationType = db.RelationType.Select(x => new GetAllRelationTypeMode()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.HomeValue = db.HomeValue.Select(x => new GetAllHomeValueModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.Ages = db.Age.Select(x => new GetAllAgeModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.Provinces = db.Province.Select(x => new GetAllProvinceModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
+                result.RelationType = db.RelationType.Select(x => new GetAllRelationTypeMode()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.Genders = db.Gender.Select(x => new GetAllGenderModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.Ages = db.Age.Select(x => new GetAllAgeModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.HealtStatus = db.HealthStatus.Select(x => new GetAllHealthStatusModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.Genders = db.Gender.Select(x => new GetAllGenderModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.LiveTypes = db.LiveType.Select(x => new GetAllLiveTypeModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.HealtStatus = db.HealthStatus.Select(x => new GetAllHealthStatusModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            result.MarriageStatus = db.MarriageStatus.Select(x => new GetAllMarriageStatusModel()
-            {
-                Id = x.Id,
-                ItemValue = x.ItemValue
-            }).ToList();
+                result.LiveTypes = db.LiveType.Select(x => new GetAllLiveTypeModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
 
-            return result;
+                result.MarriageStatus = db.MarriageStatus.Select(x => new GetAllMarriageStatusModel()
+                {
+                    Id = x.Id,
+                    ItemValue = x.ItemValue
+                }).ToList();
+
+                return result;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
 
-            var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
-                   .Include(x => x.Gender)
-                    .Include(x => x.Province)
-                    .Include(x => x.HealthStatus)
-                    .Include(x => x.LiveType)
-                    .Include(x => x.IncomeAmount)
-                    .Include(x => x.CarValue)
-                    .Include(x => x.HomeValue)
-                    .Include(x => x.MarriageStatus).FirstOrDefault();
-
-
-            if (user != null)
+            try
             {
-                var age = DateTime.Now.Year - user.BirthDate.Year;
-                var result = new GetOneUserData()
+                var user = db.Users.Where(x => x.Id == model.StringId).Include(x => x.Gender)
+                           .Include(x => x.Gender)
+                            .Include(x => x.Province)
+                            .Include(x => x.HealthStatus)
+                            .Include(x => x.LiveType)
+                            .Include(x => x.IncomeAmount)
+                            .Include(x => x.CarValue)
+                            .Include(x => x.HomeValue)
+                            .Include(x => x.MarriageStatus).FirstOrDefault();
+
+
+                if (user != null)
                 {
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Gender = user.Gender.ItemValue == null ? "نامشخص" : user?.Gender?.ItemValue,
-                    HealthStatus = user.HealthStatus.ItemValue == null ? "نامشخص" : user?.HealthStatus?.ItemValue,
-                    Id = user.Id,
-                    LiveType = user.LiveType.ItemValue == null ? "نامشخص" : user?.LiveType?.ItemValue,
-                    MarriageStatus = user.MarriageStatus.ItemValue == null ? "نامشخص" : user?.MarriageStatus?.ItemValue,
-                    MyDescription = user.MyDescription == null ? "نامشخص" : user?.MyDescription,
-                    Province = user.Province.ItemValue == null ? "نامشخص" : user?.Province?.ItemValue,
-                    RDescription = user.RDescription == null ? "نامشخص" : user?.RDescription,
-                    Age = age,
-                    IncomeAmount = user?.IncomeAmount?.ItemValue == null ? "نامشخص" : user?.IncomeAmount?.ItemValue,
-                    CarValue = user?.CarValue?.ItemValue == null ? "نامشخص" : user?.CarValue?.ItemValue,
-                    HomeValue = user?.HomeValue?.ItemValue == null ? "نامشخص" : user?.HomeValue?.ItemValue,
-                    RelationType = user?.RelationType?.ItemValue == null ? "نامشخص" : user?.RelationType?.ItemValue,
+                    var age = DateTime.Now.Year - user.BirthDate.Year;
+                    var result = new GetOneUserData()
+                    {
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Gender = user.Gender.ItemValue == null ? "نامشخص" : user?.Gender?.ItemValue,
+                        HealthStatus = user.HealthStatus.ItemValue == null ? "نامشخص" : user?.HealthStatus?.ItemValue,
+                        Id = user.Id,
+                        LiveType = user.LiveType.ItemValue == null ? "نامشخص" : user?.LiveType?.ItemValue,
+                        MarriageStatus = user.MarriageStatus.ItemValue == null ? "نامشخص" : user?.MarriageStatus?.ItemValue,
+                        MyDescription = user.MyDescription == null ? "نامشخص" : user?.MyDescription,
+                        Province = user.Province.ItemValue == null ? "نامشخص" : user?.Province?.ItemValue,
+                        RDescription = user.RDescription == null ? "نامشخص" : user?.RDescription,
+                        Age = age,
+                        IncomeAmount = user?.IncomeAmount?.ItemValue == null ? "نامشخص" : user?.IncomeAmount?.ItemValue,
+                        CarValue = user?.CarValue?.ItemValue == null ? "نامشخص" : user?.CarValue?.ItemValue,
+                        HomeValue = user?.HomeValue?.ItemValue == null ? "نامشخص" : user?.HomeValue?.ItemValue,
+                        RelationType = user?.RelationType?.ItemValue == null ? "نامشخص" : user?.RelationType?.ItemValue,
 
-                };
-                result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
-                result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
+                    };
+                    result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
+                    result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
 
-                var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
-                result.IsBlocked = isBlocked;
+                    var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                    result.IsBlocked = isBlocked;
 
-                var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
-                result.IsFavorite = isfavorite;
+                    var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
+                    result.IsFavorite = isfavorite;
 
 
-                db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
-                {
-                    RUsersId = model.StringId,
-                    UserId_CheckedMe = model.CurrentUserId
-                });
-                db.SaveChanges();
+                    db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
+                    {
+                        RUsersId = model.StringId,
+                        UserId_CheckedMe = model.CurrentUserId
+                    });
+                    db.SaveChanges();
 
-                return new ResultModel<GetOneUserData>(result);
+                    return new ResultModel<GetOneUserData>(result);
+                }
+
+
+                return new ResultModel<GetOneUserData>(false);
             }
-
-
-            return new ResultModel<GetOneUserData>(false);
+            catch (Exception e)
+            {
+                return new ResultModel<GetOneUserData>(false);
+            }
 
         }
 
@@ -543,7 +545,7 @@ namespace R.Services.Services
 
 
 
-                var connection = db.Database.GetDbConnection();
+                using var connection = db.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
@@ -575,23 +577,38 @@ namespace R.Services.Services
 
         public byte[] UploadProfilePhoto(ProfilePhotoModel model)
         {
-            var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
-            if (user != null)
+            try
             {
-                user.ProfilePicture = model.ProfilePhoto;
-                db.SaveChanges();
-                return DownloadProfilePicture(model.CurrentUserId);
+                var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
+                if (user != null)
+                {
+                    user.ProfilePicture = model.ProfilePhoto;
+                    db.SaveChanges();
+                    return DownloadProfilePicture(model.CurrentUserId);
+                }
+                return null;
             }
-            return null;
+            catch (Exception e)
+            {
+                return null;
+                
+            }
         }
 
         public byte[] DownloadProfilePicture(string userId)
         {
-            var user = db.Users.FirstOrDefault(x => x.Id == userId);
-            if (user != null)
-                return user.ProfilePicture;
+            try
+            {
+                var user = db.Users.FirstOrDefault(x => x.Id == userId);
+                if (user != null)
+                    return user.ProfilePicture;
+                return null;
 
-            return null;
+            }
+            catch (Exception e)
+            {
+                return null;
+            }
         }
 
         public ResultModel<bool> BlockUserManager(BlockUserManagerInputModel model)
@@ -813,42 +830,66 @@ namespace R.Services.Services
 
         public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BaseInputModel model)
         {
-            string query = BaseSearchQuery();
+            try
+            {
+                string query = BaseSearchQuery();
 
-            query += $" and u.id  in (  select FavoritedUserId from [dbo].[FavoriteDataLog] where SourceUserId='{model.CurrentUserId}'   )";
-            var users = SerchQueryExecuter(query);
-            if (users.Count() == 0)
-                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+                query += $" and u.id  in (  select FavoritedUserId from [dbo].[FavoriteDataLog] where SourceUserId='{model.CurrentUserId}'   )";
+                var users = SerchQueryExecuter(query);
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
-            return new ResultModel<List<GetOneUserData>>(users);
+                return new ResultModel<List<GetOneUserData>>(users);
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false);
+            }
 
         }
 
         public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BaseInputModel model)
         {
+            try
+            {
 
-            string query = BaseSearchQuery();
+                string query = BaseSearchQuery();
 
-            query += $" and u.id  in ( select  SourceUserId from [dbo].[FavoriteDataLog] where FavoritedUserId='{model.CurrentUserId}'   )";
-            var users = SerchQueryExecuter(query);
-            if (users.Count() == 0)
-                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+                query += $" and u.id  in ( select  SourceUserId from [dbo].[FavoriteDataLog] where FavoritedUserId='{model.CurrentUserId}'   )";
+                var users = SerchQueryExecuter(query);
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
-            return new ResultModel<List<GetOneUserData>>(users);
+                return new ResultModel<List<GetOneUserData>>(users);
 
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false);
+            }
         }
 
         public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model)
         {
 
-            string query = BaseSearchQuery(true);
-            query += $"  and rn=1  and ch.rUsersId='{model.CurrentUserId}' {Environment.NewLine} order by ch.datetime desc  ";
+            try
+            {
 
-            var users = SerchQueryExecuter(query, true);
-            if (users.Count() == 0)
-                return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+                string query = BaseSearchQuery(true);
+                query += $"  and rn=1  and ch.rUsersId='{model.CurrentUserId}' {Environment.NewLine} order by ch.datetime desc  ";
 
-            return new ResultModel<List<GetOneUserData>>(users);
+                var users = SerchQueryExecuter(query, true);
+                if (users.Count() == 0)
+                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+                return new ResultModel<List<GetOneUserData>>(users);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<List<GetOneUserData>>(false);
+
+            }
 
         }
 
@@ -971,61 +1012,75 @@ namespace R.Services.Services
         private List<GetOneUserData> SerchQueryExecuter(string query, bool getMeLog = false)
         {
 
-            var connection = db.Database.GetDbConnection();
-            using var command = connection.CreateCommand();
-            command.CommandText = query;
-            command.CommandType = CommandType.Text;
-            var users = new List<GetOneUserData>();
-            connection.Open();
-
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
+            try
             {
-                var user = new GetOneUserData();
+                using var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                var users = new List<GetOneUserData>();
+                connection.Open();
 
-                user.Id = reader.GetString(reader.GetOrdinal("Id"));
-                user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
-                user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
-                user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
-                user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
-                user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
-                user.Age = reader.GetInt32("age");
-                user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
-                user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
-                user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
-                user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
-                user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
-                user.LastActivityDate = !reader.IsDBNull(reader.GetOrdinal("LastActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate"))) : "نامشخص"; // مقدار جایگزین
-                user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
-                user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
-                user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
-                user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    var user = new GetOneUserData();
 
-                if (getMeLog)
-                    user.ActivityDate = !reader.IsDBNull(reader.GetOrdinal("ActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("ActivityDate"))) : "نامشخص"; // مقدار جایگزین
+                    user.Id = reader.GetString(reader.GetOrdinal("Id"));
+                    user.FirstName = reader.GetString(reader.GetOrdinal("FirstName"));
+                    user.LastName = reader.GetString(reader.GetOrdinal("LastName"));
+                    user.MyDescription = reader.IsDBNull(reader.GetOrdinal("MyDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("MyDescription"));
+                    user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
+                    user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
+                    user.Age = reader.GetInt32("age");
+                    user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
+                    user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
+                    user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
+                    user.MarriageStatus = reader.IsDBNull(reader.GetOrdinal("MarriageStatus")) ? null : reader.GetString(reader.GetOrdinal("MarriageStatus"));
+                    user.Province = reader.IsDBNull(reader.GetOrdinal("Province")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("Province"));
+                    user.LastActivityDate = !reader.IsDBNull(reader.GetOrdinal("LastActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastActivityDate"))) : "نامشخص"; // مقدار جایگزین
+                    user.IncomeAmount = reader.IsDBNull(reader.GetOrdinal("IncomeAmount")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("IncomeAmount"));
+                    user.CarValue = reader.IsDBNull(reader.GetOrdinal("CarValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("CarValue"));
+                    user.HomeValue = reader.IsDBNull(reader.GetOrdinal("HomeValue")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HomeValue"));
+                    user.RelationType = reader.IsDBNull(reader.GetOrdinal("RelationType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RelationType"));
 
-                users.Add(user);
+                    if (getMeLog)
+                        user.ActivityDate = !reader.IsDBNull(reader.GetOrdinal("ActivityDate")) ? Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("ActivityDate"))) : "نامشخص"; // مقدار جایگزین
+
+                    users.Add(user);
+                }
+
+                connection.Close(); // بستن کانکشن
+                return users;
             }
-
-            connection.Close(); // بستن کانکشن
-            return users;
+            catch (Exception e)
+            {
+                return null;
+            }
         }
 
         public ResultModel<bool> ChangePassword(ChangePasswordInputModel model)
         {
-            if (string.IsNullOrEmpty(model.NewPassword) || string.IsNullOrEmpty(model.CurrentPassword))
-                return new ResultModel<bool>(false, "وارد کردن کلمه عبور و تکرار آن اجباری است");
+            try
+            {
+                if (string.IsNullOrEmpty(model.NewPassword) || string.IsNullOrEmpty(model.CurrentPassword))
+                    return new ResultModel<bool>(false, "وارد کردن کلمه عبور و تکرار آن اجباری است");
 
-            var user = db.Users.Find(model.CurrentUserId);
-            if (user == null)
-                return new ResultModel<bool>(false, "کاربری یافت نشد");
+                var user = db.Users.Find(model.CurrentUserId);
+                if (user == null)
+                    return new ResultModel<bool>(false, "کاربری یافت نشد");
 
-            if (user.Password != model.CurrentPassword)
-                return new ResultModel<bool>(false, "کلمه عبور فعلی خود را اشتباه وارد کرده اید");
+                if (user.Password != model.CurrentPassword)
+                    return new ResultModel<bool>(false, "کلمه عبور فعلی خود را اشتباه وارد کرده اید");
 
-            user.Password = model.NewPassword;
-            db.SaveChanges();
+                user.Password = model.NewPassword;
+                db.SaveChanges();
 
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false);
+            }
             return new ResultModel<bool>(true, true);
 
         }
@@ -1050,6 +1105,37 @@ namespace R.Services.Services
             }
             return new ResultModel<bool>(true, true);
 
+        }
+
+        public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
+        {
+            try
+            {
+                string query = $"select count(id) UnreadMessagesCount from UsersMessages where SenderUserId='{model.CurrentUserId}' and MessageStatusId=1";
+
+
+                int UnreadMessagesCount = 0;
+                using var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                connection.Open();
+
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("UnreadMessagesCount"));
+                }
+
+                connection.Close();
+                return new ResultModel<int>(UnreadMessagesCount);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<int>(false);
+
+            }
         }
 
 
