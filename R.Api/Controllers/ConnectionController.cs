@@ -77,7 +77,7 @@ namespace R.Api.Controllers
         public ResultModel<bool> DeleteMessage(SelectedItemModel model)
         {
             return _service.DeleteMessage(model);
-        }   
+        }
 
 
         [HttpPost("GetCountOfUnreadMessages")]
@@ -121,23 +121,25 @@ namespace R.Api.Controllers
         {
             return _service.ChangePassword(model);
         }
+        [HttpPost("UpdateUserInfo")]
+        public ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model)
+        {
+            var result = _service.UpdateUserInfo(model);
+            return result;
+        }
 
 
         [HttpPost("upload")]
         public async Task<IActionResult> UploadProfilePicture(UploadFileInputModel model)
         {
 
-
-            if (model.file == null || model.file.Length == 0)
-                return BadRequest("No file uploaded.");
-
             using var memoryStream = new MemoryStream();
-            await model.file.CopyToAsync(memoryStream);
+            await model.File.CopyToAsync(memoryStream);
             byte[] fileBytes = memoryStream.ToArray();
             _service.UploadProfilePhoto(new ProfilePhotoModel
             {
                 ProfilePhoto = fileBytes,
-                CurrentUserId = model.userId
+                CurrentUserId = model.CurrentUserId
             });
             return Ok(new { message = "opload ok" });
         }
@@ -151,11 +153,9 @@ namespace R.Api.Controllers
         }
 
     }
-    public class UploadFileInputModel
+    public class UploadFileInputModel : BaseInputModel
     {
-        public IFormFile file { get; set; }
-        public string userId { get; set; }
-
+        public IFormFile File { get; set; }
     }
 
 }

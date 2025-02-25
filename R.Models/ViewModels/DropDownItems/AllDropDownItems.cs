@@ -73,29 +73,29 @@ namespace R.Models.ViewModels.DropDownItems
                 } ,
                  new GetAllRangePoost()
                 {
-                    Id=1,
+                    Id=2,
                     ItemValue = "برنز"
                 },
                   new GetAllRangePoost()
                 {
-                    Id=1,
+                    Id=3,
                     ItemValue = "سیاه"
                 },
                    new GetAllRangePoost()
                 {
-                    Id=1,
+                    Id=4,
                     ItemValue = "بور"
                 }
             };
             ZibaeeNumber = new List<GetAllGhad>();
             for (int i = 1; i < 5; i++)
             {
-                Ghad.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
+                ZibaeeNumber.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
             }
-            TipNUmber = new List<GetAllGhad>();
+            TipNumber = new List<GetAllGhad>();
             for (int i = 1; i < 5; i++)
             {
-                Ghad.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
+                TipNumber.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
             }
 
         }
@@ -117,7 +117,7 @@ namespace R.Models.ViewModels.DropDownItems
         public List<GetAllCheildCount> CheildCount { get; set; }
         public List<GetAllFirstCheildAge> FirstCheildAge { get; set; }
         public List<GetAllGhad> ZibaeeNumber { get; set; }
-        public List<GetAllGhad> TipNUmber { get; set; }
+        public List<GetAllGhad> TipNumber { get; set; }
 
     }
 }

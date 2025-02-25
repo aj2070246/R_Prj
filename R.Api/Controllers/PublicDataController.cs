@@ -74,13 +74,7 @@ namespace R.Api.Controllers
             var result = _service.RegisterUser(model);
             return result;
         }
-        [HttpPost("UpdateUserInfo")]
-        public ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model)
-        {
-            var result = _service.UpdateUserInfo(model);
-            return result;
-        }
-
+    
 
         [HttpPost("login")]
         public ResultModel<LoginResultModel> login(LoginInputModel model)

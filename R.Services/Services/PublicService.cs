@@ -368,12 +368,10 @@ namespace R.Services.Services
                 user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
                 user.FirstName = model.FirstName;
                 user.LastName = model.LastName;
-                user.Password = model.Password;
                 user.UserName = model.UserName;
                 user.RDescription = model.RDescription;
                 user.MyDescription = model.MyDescription;
                 user.ProvinceId = model.Province;
-                user.GenderId = model.Gender;
                 user.LiveTypeId = model.LiveType;
                 user.HealthStatusId = model.HealtStatus;
                 user.MarriageStatusId = model.MarriageStatus;
@@ -801,7 +799,7 @@ namespace R.Services.Services
                 user.Id = entity.Id;
                 user.CarValue = entity.CarValueId;
                 user.HomeValue = entity.HomeValueId;
-                user.HealthStatus = entity.HealthStatusId;
+                user.HealtStatus = entity.HealthStatusId;
                 user.IncomeAmount = entity.IncomeAmountId;
                 user.LiveType = entity.LiveTypeId;
                 user.RelationType = entity.RelationTypeId;
@@ -821,7 +819,7 @@ namespace R.Services.Services
                 user.CheildCount = entity.CheildCount;
                 user.FirstCheildAge = entity.FirstCheildAge;
                 user.ZibaeeNumber = entity.ZibaeeNumber;
-                user.TipNUmber = entity.TipNUmber;
+                user.TipNumber = entity.TipNUmber;
                 user.RangePoost = entity.RangePoost;
                 return new ResultModel<GetMyProfileInfoResultModel>(user);
 

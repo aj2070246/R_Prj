@@ -21,7 +21,7 @@ namespace R.Models.ViewModels
         public long BirthDateMonth { get; set; }
         public long BirthDateDay { get; set; }
         public int Age { get; set; }
-        public long HealthStatus { get; set; }
+        public long? HealtStatus { get; set; }
         public long? LiveType { get; set; }
         public long MarriageStatus { get; set; }
         public long Province { get; set; }
@@ -38,7 +38,7 @@ namespace R.Models.ViewModels
         public int CheildCount { get; set; }
         public int FirstCheildAge { get; set; }
         public int ZibaeeNumber { get; set; }
-        public int TipNUmber { get; set; }
+        public int TipNumber { get; set; }
 
     }
 }
