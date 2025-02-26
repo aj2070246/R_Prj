@@ -9,22 +9,31 @@ using R.Api;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(5000); // به جای localhost از AnyIP استفاده کن
+});
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", policy =>
     {
         policy.AllowAnyOrigin()
-        .WithOrigins("http://localhost:3001")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
-         .WithOrigins("http://127.0.0.1:3001")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
-        
-         .WithOrigins("http://127.0.0.1:5173")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
-         .WithOrigins("http://localhost:5173")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
-        
-         .WithOrigins("http://127.0.0.1:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
-         .WithOrigins("http://localhost:3000")  // دامنه‌ای که می‌خواهید دسترسی داشته باشد
+         .WithOrigins(
+            "http://localhost:3001"
+       , "http://127.0.0.1:3001"
+       , "http://127.0.0.1:5173"
+       , "http://localhost:5173"
+       , "http://127.0.0.1:3000"
+       , "http://localhost:3000"
+       , "http://5.223.41.164:4000"
+       , "http://5.223.41.164:4001"
+       , "http://localhost:4000"
+       , "http://localhost:4001")
+
               .AllowAnyHeader()  // مجاز کردن هدرهای عمومی
               .AllowAnyMethod(); // مجاز کردن متدهای عمومی (GET, POST, PUT, DELETE)
-              });
+    });
 });
 
 // Add services to the container.
@@ -52,5 +61,7 @@ app.UseCors("AllowSpecificOrigin");
 app.UseAuthorization();
 //app.UseMiddleware<TokenValidationMiddleware>();
 app.MapControllers();
+
+app.Urls.Add("http://0.0.0.0:5000");
 
 app.Run();

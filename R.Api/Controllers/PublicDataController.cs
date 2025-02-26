@@ -37,13 +37,13 @@ namespace R.Api.Controllers
             var result = _service.GetAllDropDownItems();
             return new ResultModel<AllDropDownItems>(result);
         }
-     
+
         [HttpPost("SendEmailVerifyCodeForResetPassword")]
         public async Task<ResultModel<bool>> SendEmailVerifyCodeForResetPassword(SendEmailVerifyCodeInputModel model)
         {
-            ResultModel<bool> result = _service.SendEmailVerifyCode(model,true);
-             
-            return new ResultModel<bool>(true,true);
+            ResultModel<bool> result = _service.SendEmailVerifyCode(model, true);
+
+            return new ResultModel<bool>(true, true);
 
         }
 
@@ -74,7 +74,7 @@ namespace R.Api.Controllers
             var result = _service.RegisterUser(model);
             return result;
         }
-    
+
 
         [HttpPost("login")]
         public ResultModel<LoginResultModel> login(LoginInputModel model)
@@ -85,20 +85,27 @@ namespace R.Api.Controllers
         [HttpGet("GetCaptcha")]
         public IActionResult GetCaptcha()
         {
-            string captchaText = GenerateRandomText();
-            string captchaId = Guid.NewGuid().ToString();
-
-            // ذخیره کپچا در کش یا دیتابیس
-            SaveCaptchaToDatabase(captchaId, captchaText);
-
-            // ایجاد تصویر کپچا
-            string base64Image = GenerateCaptchaImage(captchaText);
-
-            return Ok(new
+            try
             {
-                image = "data:image/png;base64," + base64Image,
-                guid = captchaId
-            });
+                string captchaText = GenerateRandomText();
+                string captchaId = Guid.NewGuid().ToString();
+
+                // ذخیره کپچا در کش یا دیتابیس
+                SaveCaptchaToDatabase(captchaId, captchaText);
+
+                // ایجاد تصویر کپچا
+                string base64Image = GenerateCaptchaImage(captchaText);
+
+                return Ok(new
+                {
+                    image = "data:image/png;base64," + base64Image,
+                    guid = captchaId
+                });
+            }
+            catch (Exception e)
+            {
+                return Ok(e.Message.ToString() + " ---------------------" + e.InnerException.ToString());
+            }
         }
 
         private string GenerateRandomText()
