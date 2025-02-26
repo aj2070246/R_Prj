@@ -10,7 +10,7 @@ namespace R.Models.ViewModels
     {
 
         public string CurrentUserId { get; set; }
-        public string EmailAddress { get; set; }
+        public string? EmailAddress { get; set; }
         public string CaptchaId { get; set; }
         public string CaptchaValue { get; set; }
     }
