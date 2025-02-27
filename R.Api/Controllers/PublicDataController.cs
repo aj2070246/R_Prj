@@ -1,20 +1,14 @@
-﻿using System.Drawing;
-using Microsoft.AspNetCore.Mvc;
-using R.Database;
+﻿using Microsoft.AspNetCore.Mvc;
 using R.Models.ViewModels;
 using R.Services.IServices;
-using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
 using R.Models;
 using R.Models.ViewModels.DropDownItems;
-using Microsoft.EntityFrameworkCore;
-using SendGrid.Helpers.Mail;
-using SendGrid;
-using System.Net.Mail;
-using System.Net;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Drawing.Processing;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Fonts;
+using SixLabors.ImageSharp.PixelFormats;
+
 namespace R.Api.Controllers
 {
     [ApiController]
@@ -38,12 +32,11 @@ namespace R.Api.Controllers
             return new ResultModel<AllDropDownItems>(result);
         }
 
-        [HttpPost("SendEmailVerifyCodeForResetPassword")]
-        public async Task<ResultModel<bool>> SendEmailVerifyCodeForResetPassword(SendEmailVerifyCodeInputModel model)
+        [HttpPost("SendEmailForNewPassword")]
+        public async Task<ResultModel<bool>> SendEmailForNewPassword(SendEmailVerifyCodeInputModel model)
         {
             ResultModel<bool> result = _service.SendEmailVerifyCode(model, true);
-
-            return new ResultModel<bool>(true, true);
+            return result;
 
         }
 
@@ -53,14 +46,7 @@ namespace R.Api.Controllers
             ResultModel<bool> result = _service.SendEmailVerifyCode(model, false);
 
             return new ResultModel<bool>(true, true);
-        }
-
-        [HttpPost("VerifyEmailCodeForResetPassword")]
-        public ResultModel<bool> VerifyEmailCodeForResetPassword(CheckEmailVerifyCodeInputModel model)
-        {
-            ResultModel<bool> result = _service.VerifyEmailCode(model, true);
-            return result;
-        }
+        } 
         [HttpPost("VerifyEmailCodeForAcceptEmail")]
         public async Task<ResultModel<bool>> VerifyEmailCodeForAcceptEmail(CheckEmailVerifyCodeInputModel model)
         {
@@ -82,6 +68,7 @@ namespace R.Api.Controllers
             var result = _service.login(model);
             return result;
         }
+
         [HttpGet("GetCaptcha")]
         public IActionResult GetCaptcha()
         {
@@ -104,7 +91,7 @@ namespace R.Api.Controllers
             }
             catch (Exception e)
             {
-                return Ok(e.Message.ToString() + " ---------------------" + e.InnerException.ToString());
+                return Ok(e.Message.ToString() + " ---------------------" + e.InnerException?.ToString());
             }
         }
 
@@ -119,24 +106,28 @@ namespace R.Api.Controllers
         private void SaveCaptchaToDatabase(string captchaId, string text)
         {
             _service.SaveCaptcha(new SaveCaptchaInputModel { CaptchaId = captchaId, CaptchaValue = text });
-
         }
+
 
         private string GenerateCaptchaImage(string text)
         {
-            using (Bitmap bitmap = new Bitmap(120, 40))
-            using (Graphics g = Graphics.FromImage(bitmap))
+            using (var image = new Image<Rgba32>(120, 40))
             {
-                g.Clear(Color.White);
-                Font font = new Font("Arial", 20, FontStyle.Bold);
-                g.DrawString(text, font, Brushes.Black, 10, 5);
+                image.Mutate(x => x.Fill(Color.White));
 
-                using (MemoryStream ms = new MemoryStream())
+                // استفاده از فونت Liberation Sans
+                var font = SystemFonts.CreateFont("Liberation Serif", 20, FontStyle.Bold);
+
+                // رسم متن کپچا
+                image.Mutate(x => x.DrawText(text, font, Color.Black, new PointF(10, 5)));
+
+                using (var ms = new MemoryStream())
                 {
-                    bitmap.Save(ms, ImageFormat.Png);
+                    image.SaveAsPng(ms);
                     return Convert.ToBase64String(ms.ToArray());
                 }
             }
         }
+    
     }
 }

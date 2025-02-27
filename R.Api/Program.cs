@@ -27,6 +27,7 @@ builder.Services.AddCors(options =>
        , "http://127.0.0.1:3000"
        , "http://localhost:3000"
        , "http://5.223.41.164:4000"
+       , "http://5.223.41.164:443"
        , "http://5.223.41.164:4001"
        , "http://localhost:4000"
        , "http://localhost:4001")

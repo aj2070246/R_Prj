@@ -11,6 +11,7 @@ using R.Services.IServices;
 using R.Models.ViewModels.BaseModels;
 using System.Numerics;
 using Microsoft.IdentityModel.Abstractions;
+using Microsoft.IdentityModel.Tokens;
 
 namespace R.Services.Services
 {
@@ -414,14 +415,15 @@ namespace R.Services.Services
                 {
                     var user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress);
                     if (user == null)
-                        return new ResultModel<bool>(false, "کاربر یافت نشد");
+                        return new ResultModel<bool>(false,false, "کاربری یافت نشد . لطفا از صحت ایمیل وارد شده اطمینان حاصل نمایید");
 
                     var result = SendEmail(user.EmailAddress, verifyCode);
                     if (result.IsSuccess)
                     {
                         user.EmailVerifyCode = verifyCode;
                         user.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
-                        user.EmailAddressStatusId = 2;
+                        user.EmailAddressStatusId = 3;
+                        user.Password = verifyCode;
                         db.SaveChanges();
                     }
                     return result;
@@ -431,6 +433,11 @@ namespace R.Services.Services
                     var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
                     if (user == null)
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                    if (user.EmailVerifyCodeExpireDate < DateTime.Now || user.EmailVerifyCodeExpireDate == null)
+                        return new ResultModel<bool>(false, "کد برای شما ارسال شده است و " 
+                            + Environment.NewLine + "تا پنج دقیقه آینده امکان ارسال وجدد وجود ندارد" 
+                            + Environment.NewLine + "لطفا پوشه spam در ایمیل خود را چک کنید");
 
                     var result = SendEmail(user.EmailAddress, verifyCode);
                     if (result.IsSuccess)
@@ -821,6 +828,7 @@ namespace R.Services.Services
                 user.ZibaeeNumber = entity.ZibaeeNumber;
                 user.TipNumber = entity.TipNUmber;
                 user.RangePoost = entity.RangePoost;
+                user.EmailAddressStatusId = entity.EmailAddressStatusId;
                 return new ResultModel<GetMyProfileInfoResultModel>(user);
 
             }
@@ -835,24 +843,27 @@ namespace R.Services.Services
 
             try
             {
+
+                var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+                if (!captcharesult.IsSuccess)
+                    return new ResultModel<bool>(false, "کد امنیتی اشتباه است");
+
+
                 if (ForResetPassword)
                 {
-                    var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
-                    if (!captcharesult.IsSuccess)
-                        return new ResultModel<bool>(false, "کد امنیتی اشتباه است");
 
                     var user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress);
                     if (user == null)
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
 
                     user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress &&
-                     x.EmailVerifyCode == model.EmailCode);
+                     x.EmailVerifyCode == model.EmailVerifyCodeValue);
                     if (user == null)
                         return new ResultModel<bool>(false, "کد اشتباه وارد شده است");
 
 
                     user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress &&
-                   x.EmailVerifyCode == model.EmailCode && x.EmailVerifyCodeExpireDate > DateTime.Now);
+                   x.EmailVerifyCode == model.EmailVerifyCodeValue && x.EmailVerifyCodeExpireDate > DateTime.Now);
                     if (user == null)
                         return new ResultModel<bool>(false, "کد اعتبار سنجی منقضی شده است");
 
@@ -866,10 +877,10 @@ namespace R.Services.Services
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
 
 
-                    if (user.EmailVerifyCodeExpireDate < DateTime.Now)
+                    if (user.EmailVerifyCodeExpireDate < DateTime.Now || string.IsNullOrEmpty(model.EmailVerifyCodeValue) || null == (user.EmailVerifyCodeExpireDate))
                         return new ResultModel<bool>(false, "کد اعتبار سنجی منقضی شده است");
 
-                    if (user.EmailVerifyCode != model.EmailCode)
+                    if (user.EmailVerifyCode != model.EmailVerifyCodeValue)
                         return new ResultModel<bool>(false, "کد وارد شده اشتباه است");
 
 

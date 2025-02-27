@@ -39,6 +39,7 @@ namespace R.Models.ViewModels
         public int FirstCheildAge { get; set; }
         public int ZibaeeNumber { get; set; }
         public int TipNumber { get; set; }
+        public int EmailAddressStatusId { get; set; }
 
     }
 }
