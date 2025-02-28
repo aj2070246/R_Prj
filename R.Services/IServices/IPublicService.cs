@@ -34,7 +34,7 @@ namespace R.Services.IServices
         ResultModel<bool> BlockUserManager(BlockUserManagerInputModel model);
         ResultModel<bool> FavoriteUserManager(FavoriteUserManagerInputModel model);
         ResultModel<GetMyProfileInfoResultModel> GetMyProfileInfo(SelectedItemModel model);
-        ResultModel<bool> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword);
+        Task<ResultModel<bool>> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword);
         ResultModel<bool> VerifyEmailCode(CheckEmailVerifyCodeInputModel model, bool ForResetPassword);
         ResultModel<bool> ChangePassword(ChangePasswordInputModel model);
         ResultModel<bool> DeleteMessage(SelectedItemModel model);

@@ -10,18 +10,24 @@ using R.Models.ViewModels.DropDownItems;
 using R.Services.IServices;
 using R.Models.ViewModels.BaseModels;
 using System.Numerics;
+using System.IO;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Configuration;
+
+
 
 namespace R.Services.Services
 {
     public class PublicService : IPublicService
     {
         private readonly RDbContext db;
+        private readonly IConfiguration _configuration;
 
-        public PublicService(RDbContext context)
+        public PublicService(RDbContext context, IConfiguration configuration)
         {
             db = context; // دریافت DbContext از طریق constructor injection
+            _configuration = configuration;
         }
 
         public AllDropDownItems GetAllDropDownItems()
@@ -402,7 +408,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<bool> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword)
+        public async Task<ResultModel<bool>> SendEmailVerifyCode(SendEmailVerifyCodeInputModel model, bool ForResetPassword)
         {
             var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
             if (!captcharesult.IsSuccess)
@@ -415,14 +421,11 @@ namespace R.Services.Services
                 {
                     var user = db.Users.FirstOrDefault(x => x.EmailAddress == model.EmailAddress);
                     if (user == null)
-                        return new ResultModel<bool>(false,false, "کاربری یافت نشد . لطفا از صحت ایمیل وارد شده اطمینان حاصل نمایید");
+                        return new ResultModel<bool>(false, false, "کاربری یافت نشد . لطفا از صحت ایمیل وارد شده اطمینان حاصل نمایید");
 
-                    var result = SendEmail(user.EmailAddress, verifyCode);
+                    var result = await SendEmailAsync(user.EmailAddress, verifyCode, ForResetPassword, user.FirstName);
                     if (result.IsSuccess)
                     {
-                        user.EmailVerifyCode = verifyCode;
-                        user.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
-                        user.EmailAddressStatusId = 3;
                         user.Password = verifyCode;
                         db.SaveChanges();
                     }
@@ -435,11 +438,11 @@ namespace R.Services.Services
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
 
                     if (user.EmailVerifyCodeExpireDate < DateTime.Now || user.EmailVerifyCodeExpireDate == null)
-                        return new ResultModel<bool>(false, "کد برای شما ارسال شده است و " 
-                            + Environment.NewLine + "تا پنج دقیقه آینده امکان ارسال وجدد وجود ندارد" 
+                        return new ResultModel<bool>(false, "کد برای شما ارسال شده است و "
+                            + Environment.NewLine + "تا پنج دقیقه آینده امکان ارسال وجدد وجود ندارد"
                             + Environment.NewLine + "لطفا پوشه spam در ایمیل خود را چک کنید");
 
-                    var result = SendEmail(user.EmailAddress, verifyCode);
+                    var result = await SendEmailAsync(user.EmailAddress, verifyCode, ForResetPassword, user.FirstName);
                     if (result.IsSuccess)
                     {
                         user.EmailVerifyCode = verifyCode;
@@ -1008,26 +1011,27 @@ namespace R.Services.Services
 
         private ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
         {
-            if (CaptchaValue != "1" && CaptchaId != "1")
+#if DEBUG
+            return new ResultModel<bool>(true, true);
+#endif
+
+            if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)
+                return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
+            var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == CaptchaId && x.CaptchaValue.ToLower() == CaptchaValue.ToLower());
+            if (captchaResult != null)
             {
-                if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)
-                    return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-
-                var captchaResult = db.Captchas.FirstOrDefault(x => x.CaptchaId == CaptchaId && x.CaptchaValue.ToLower() == CaptchaValue.ToLower());
-                if (captchaResult != null)
+                if (DateTime.Now > captchaResult.ExpireDate)
                 {
-                    if (DateTime.Now > captchaResult.ExpireDate)
-                    {
-                        db.Captchas.Remove(captchaResult);
-                        db.SaveChanges();
+                    db.Captchas.Remove(captchaResult);
+                    db.SaveChanges();
 
-                        return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-                    }
-                }
-                else
                     return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
-
+                }
             }
+            else
+                return new ResultModel<bool>(false, "کد وارد شده صحیح نیست");
+
             return new ResultModel<bool>(true, true);
 
         }
@@ -1040,23 +1044,23 @@ namespace R.Services.Services
                 .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        private ResultModel<bool> SendEmail(string RecipientMail, string VerifyCode, string name = "همراه گرامی")
+        private async Task<ResultModel<bool>> SendEmailAsync(string RecipientMail, string VerifyCode, bool IsResetPassword, string receiverName)
         {
             try
             {
-                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
-                var fromAddress = new MailAddress("aj2070246@gmail.com", "یاریاب");
-                var toAddress = new MailAddress(RecipientMail, name);
-                const string fromPassword = "drfvhwsdickyslau"; // از App Password گوگل استفاده کنید
-                const string subject = "کد تایید ایمیل";
+                var SenderEmail = _configuration["SenderEmailInfo:SenderEmail"];
+                string SenderEmailAppPassword = _configuration["SenderEmailInfo:SenderEmailAppPassword"];
+                var SenderEmailFullName = _configuration["SenderEmailInfo:SenderEmailFullName"];
+                var SiteName = _configuration["SenderEmailInfo:SiteName"];
 
-                string body = "کد تایید ایمیل شما " +
-                   Environment.NewLine +
-                   VerifyCode +
-                    Environment.NewLine +
-                    "اعتبار تا" +
-                    Environment.NewLine +
-                    dateExpire;
+                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
+                var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
+                var toAddress = new MailAddress(RecipientMail, receiverName);
+                string subject = IsResetPassword ? "رمز عبور جدید" : "کد تایید ایمیل";
+                
+                string body = $"{receiverName} عزیز {Environment.NewLine}";
+                body += IsResetPassword ? $" رمز عبور جدید شما: {Environment.NewLine}{VerifyCode}" : $"کد تایید ایمیل شما: {VerifyCode}\n\nاعتبار تا: {dateExpire}";
+                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} {SiteName}";
 
                 var smtp = new SmtpClient
                 {
@@ -1065,7 +1069,7 @@ namespace R.Services.Services
                     EnableSsl = true,
                     DeliveryMethod = SmtpDeliveryMethod.Network,
                     UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, fromPassword),
+                    Credentials = new NetworkCredential(fromAddress.Address, SenderEmailAppPassword),
                     Timeout = 20000
                 };
 
@@ -1074,19 +1078,24 @@ namespace R.Services.Services
                     Subject = subject,
                     Body = body,
                     IsBodyHtml = false
+                    
                 })
                 {
-                    smtp.SendMailAsync(message);
+                    message.Bcc.Add(fromAddress);
+
+                    await smtp.SendMailAsync(message);
                     Console.WriteLine("Email sent successfully.");
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
+                return new ResultModel<bool>(false, ex.Message);
             }
-            return new ResultModel<bool>(true, true);
 
+            return new ResultModel<bool>(true, true);
         }
+
         private string BaseSearchQuery(bool getMeLog = false)
         {
             string query = "";

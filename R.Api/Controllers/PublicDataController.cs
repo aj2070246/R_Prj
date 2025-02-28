@@ -35,7 +35,7 @@ namespace R.Api.Controllers
         [HttpPost("SendEmailForNewPassword")]
         public async Task<ResultModel<bool>> SendEmailForNewPassword(SendEmailVerifyCodeInputModel model)
         {
-            ResultModel<bool> result = _service.SendEmailVerifyCode(model, true);
+            ResultModel<bool> result = await _service.SendEmailVerifyCode(model, true);
             return result;
 
         }
@@ -43,7 +43,7 @@ namespace R.Api.Controllers
         [HttpPost("SendEmailVerifyCodeForVerify")]
         public async Task<ResultModel<bool>> SendEmailVerifyCodeForVerify(SendEmailVerifyCodeInputModel model)
         {
-            ResultModel<bool> result = _service.SendEmailVerifyCode(model, false);
+            ResultModel<bool> result = await _service.SendEmailVerifyCode(model, false);
 
             return new ResultModel<bool>(true, true);
         } 
