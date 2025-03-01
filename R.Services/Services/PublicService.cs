@@ -537,8 +537,11 @@ namespace R.Services.Services
                             query += $" {Environment.NewLine}  and u.LastActivityDate >= DATEADD(MINUTE, 60 , GETDATE())";
                     }
                 }
-
+                model.PageIndex--;
                 var users = SerchQueryExecuter(query);
+                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
+                    $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 

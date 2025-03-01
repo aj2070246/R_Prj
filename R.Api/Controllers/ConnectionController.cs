@@ -149,6 +149,8 @@ namespace R.Api.Controllers
         public async Task<IActionResult> DownloadProfilePicture(string userId)
         {
             var result = _service.DownloadProfilePicture(userId);
+            if (result == null)
+                return NotFound();
             return File(result, "image/jpeg"); // یا image/png
         }
 
