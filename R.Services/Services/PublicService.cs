@@ -1246,7 +1246,7 @@ Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDat
         {
             try
             {
-                string query = $"select count(id) UnreadMessagesCount from UsersMessages where SenderUserId='{model.CurrentUserId}' and MessageStatusId=1";
+                string query = $"select count(id) UnreadMessagesCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
 
 
                 int UnreadMessagesCount = 0;
@@ -1263,7 +1263,7 @@ Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDat
                 }
 
                 connection.Close();
-                return new ResultModel<int>(UnreadMessagesCount);
+                return new ResultModel<int>(UnreadMessagesCount++);
 
             }
             catch (Exception e)

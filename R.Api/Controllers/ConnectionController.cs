@@ -85,8 +85,7 @@ namespace R.Api.Controllers
         public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
         {
             return _service.GetCountOfUnreadMessages(model);
-        }
-
+        } 
         [HttpPost("GetMyAllMessages")]
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)
         {
@@ -186,8 +185,10 @@ namespace R.Api.Controllers
         }
 
     }
-    public class UploadFileInputModel : BaseInputModel
+    public class UploadFileInputModel
     {
+        public string? CurrentUserId { get; set; }
+
         public IFormFile File { get; set; }
     }
 

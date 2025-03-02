@@ -8,7 +8,8 @@ namespace R.Models.ViewModels.BaseModels
 {
     public class BaseInputModel
     {
-        public string CurrentUserId { get; set; }
+
+        public string? CurrentUserId { get; set; }
 
     }
 }
