@@ -29,48 +29,54 @@ namespace R.Api
             {
                 List<string> trustedActions = new List<string> { "login", "getcaptcha", "registeruser", "GetAllDropDownsItems".ToLower() };
                 var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
-                if (!trustedActions.Contains(actionName.ToLower()))
-                {
-                    // بررسی توکن
-                    var token = context.Request.Headers["token"].ToString().Replace("Bearer ", "");
-                    var userId = context.Request.Headers["currentUserId"].ToString();
-
-                    if (IsValid(token) && IsValid(userId)) // متد بررسی اعتبار توکن
+                if (!string.IsNullOrEmpty(actionName))
+                    if (!trustedActions.Contains(actionName.ToLower()))
                     {
-                        // ایجاد یک دامنه جدید برای دسترسی به DbContext
-                        using (var scope = _scopeFactory.CreateScope())
-                        {
-                            var db = scope.ServiceProvider.GetRequiredService<RDbContext>();
-                            var user = db.Users.FirstOrDefault(x => x.Id.ToLower() == userId && x.Token == token);
-
-                            if (user == null)
-                            {
-                                // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
-                                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                                await context.Response.WriteAsync("Token is invalid");
-                                return; // توقف پردازش درخواست
-                            }
-                            else
-                            {
-                                user.TokenExpireDate = DateTime.Now.AddHours(1);
-                                user.LastActivityDate = DateTime.Now;
-                            }
-                            db.SaveChanges();
+                        if (actionName == "DownloadProfilePhoto") 
+                        { 
+                        
                         }
 
+                        // بررسی توکن
+                        var token = context.Request.Headers["token"].ToString().Replace("Bearer ", "");
+                        var userId = context.Request.Headers["currentUserId"].ToString();
+
+                        if (IsValid(token) && IsValid(userId)) // متد بررسی اعتبار توکن
+                        {
+                            // ایجاد یک دامنه جدید برای دسترسی به DbContext
+                            using (var scope = _scopeFactory.CreateScope())
+                            {
+                                var db = scope.ServiceProvider.GetRequiredService<RDbContext>();
+                                var user = db.Users.FirstOrDefault(x => x.Id.ToLower() == userId && x.Token == token);
+
+                                if (user == null)
+                                {
+                                    // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
+                                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                    await context.Response.WriteAsync("Token is invalid");
+                                    return; // توقف پردازش درخواست
+                                }
+                                else
+                                {
+                                    user.TokenExpireDate = DateTime.Now.AddHours(1);
+                                    user.LastActivityDate = DateTime.Now;
+                                }
+                                db.SaveChanges();
+                            }
+
+                        }
+                        else
+                        {
+                            // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            await context.Response.WriteAsync("Token is invalid");
+                            return; // توقف پردازش درخواست
+                        }
+                        // ادامه پردازش درخواست
+                        await _next(context);
                     }
                     else
-                    {
-                        // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
-                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                        await context.Response.WriteAsync("Token is invalid");
-                        return; // توقف پردازش درخواست
-                    }
-                    // ادامه پردازش درخواست
-                    await _next(context);
-                }
-                else
-                    await _next(context);
+                        await _next(context);
 
             }
             else

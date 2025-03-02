@@ -12,8 +12,8 @@ using R.Database;
 namespace R.Database.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    [Migration("20250218162020_f1")]
-    partial class f1
+    [Migration("20250302084436_t1")]
+    partial class t1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -42,6 +42,32 @@ namespace R.Database.Migrations
                     b.ToTable("Age");
                 });
 
+            modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("BlockedUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RUsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SourceUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RUsersId");
+
+                    b.ToTable("BlockedDataLog");
+                });
+
             modelBuilder.Entity("R.Database.Entities.Captcha", b =>
                 {
                     b.Property<string>("CaptchaId")
@@ -57,6 +83,72 @@ namespace R.Database.Migrations
                     b.HasKey("CaptchaId");
 
                     b.ToTable("Captchas");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.CarValue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ItemValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CarValue");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.CheckMeActivityLogs", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RUsersId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId_CheckedMe")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RUsersId");
+
+                    b.ToTable("CheckMeActivityLogs");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.FavoriteDataLog", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("DateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FavoritedUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RUsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SourceUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RUsersId");
+
+                    b.ToTable("FavoriteDataLog");
                 });
 
             modelBuilder.Entity("R.Database.Entities.Gender", b =>
@@ -91,6 +183,40 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("HealthStatus");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.HomeValue", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ItemValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HomeValue");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.IncomeAmount", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ItemValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("IncomeAmount");
                 });
 
             modelBuilder.Entity("R.Database.Entities.LiveType", b =>
@@ -152,6 +278,30 @@ namespace R.Database.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<long?>("CarValueId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("CheildCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreateUserDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EmailAddress")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("EmailAddressStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EmailVerifyCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("EmailVerifyCodeExpireDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FirstCheildAge")
+                        .HasColumnType("int");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -159,8 +309,20 @@ namespace R.Database.Migrations
                     b.Property<long>("GenderId")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("Ghad")
+                        .HasColumnType("int");
+
                     b.Property<long>("HealthStatusId")
                         .HasColumnType("bigint");
+
+                    b.Property<long?>("HomeValueId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("IncomeAmountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("LastActivityDate")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -176,6 +338,15 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("MobileStatusId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("MobileVerifyCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("MobileVerifyCodeExpireDate")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("MyDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -184,12 +355,24 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<byte[]>("ProfilePicture")
+                        .HasColumnType("varbinary(max)");
+
                     b.Property<long>("ProvinceId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("RDescription")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RangePoost")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("RelationTypeId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TipNUmber")
+                        .HasColumnType("int");
 
                     b.Property<string>("Token")
                         .IsRequired()
@@ -202,11 +385,26 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("UserStatus")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Vazn")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ZibaeeNumber")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("CarValueId");
 
                     b.HasIndex("GenderId");
 
                     b.HasIndex("HealthStatusId");
+
+                    b.HasIndex("HomeValueId");
+
+                    b.HasIndex("IncomeAmountId");
 
                     b.HasIndex("LiveTypeId");
 
@@ -214,7 +412,26 @@ namespace R.Database.Migrations
 
                     b.HasIndex("ProvinceId");
 
+                    b.HasIndex("RelationTypeId");
+
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.RelationType", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ItemValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RelationType");
                 });
 
             modelBuilder.Entity("R.Database.Entities.UsersMessages", b =>
@@ -245,8 +462,37 @@ namespace R.Database.Migrations
                     b.ToTable("UsersMessages");
                 });
 
+            modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>
+                {
+                    b.HasOne("R.Database.Entities.RUsers", null)
+                        .WithMany("BlockedDataLog")
+                        .HasForeignKey("RUsersId");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.CheckMeActivityLogs", b =>
+                {
+                    b.HasOne("R.Database.Entities.RUsers", "RUsers")
+                        .WithMany("CheckMeLogDataLog")
+                        .HasForeignKey("RUsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RUsers");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.FavoriteDataLog", b =>
+                {
+                    b.HasOne("R.Database.Entities.RUsers", null)
+                        .WithMany("FavoriteDataLog")
+                        .HasForeignKey("RUsersId");
+                });
+
             modelBuilder.Entity("R.Database.Entities.RUsers", b =>
                 {
+                    b.HasOne("R.Database.Entities.CarValue", "CarValue")
+                        .WithMany()
+                        .HasForeignKey("CarValueId");
+
                     b.HasOne("R.Database.Entities.Gender", "Gender")
                         .WithMany()
                         .HasForeignKey("GenderId")
@@ -258,6 +504,14 @@ namespace R.Database.Migrations
                         .HasForeignKey("HealthStatusId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("R.Database.Entities.HomeValue", "HomeValue")
+                        .WithMany()
+                        .HasForeignKey("HomeValueId");
+
+                    b.HasOne("R.Database.Entities.IncomeAmount", "IncomeAmount")
+                        .WithMany()
+                        .HasForeignKey("IncomeAmountId");
 
                     b.HasOne("R.Database.Entities.LiveType", "LiveType")
                         .WithMany()
@@ -277,15 +531,36 @@ namespace R.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("R.Database.Entities.RelationType", "RelationType")
+                        .WithMany()
+                        .HasForeignKey("RelationTypeId");
+
+                    b.Navigation("CarValue");
+
                     b.Navigation("Gender");
 
                     b.Navigation("HealthStatus");
+
+                    b.Navigation("HomeValue");
+
+                    b.Navigation("IncomeAmount");
 
                     b.Navigation("LiveType");
 
                     b.Navigation("MarriageStatus");
 
                     b.Navigation("Province");
+
+                    b.Navigation("RelationType");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.RUsers", b =>
+                {
+                    b.Navigation("BlockedDataLog");
+
+                    b.Navigation("CheckMeLogDataLog");
+
+                    b.Navigation("FavoriteDataLog");
                 });
 #pragma warning restore 612, 618
         }

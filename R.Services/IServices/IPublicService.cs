@@ -20,11 +20,11 @@ namespace R.Services.IServices
         bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel);
 
         ResultModel<List<GetOneUserData>> SearchUsers(SearchUsersInputModel model);
-        ResultModel<List<GetOneUserData>> GetBlockedUsers(BaseInputModel model);
-        ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BaseInputModel model);
-        ResultModel<List<GetOneUserData>> GetFavoriteUsers(BaseInputModel model);
-        ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BaseInputModel model);
-        ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model);
+        ResultModel<List<GetOneUserData>> GetBlockedUsers(BasePaginationModel model);
+        ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BasePaginationModel model);
+        ResultModel<List<GetOneUserData>> GetFavoriteUsers(BasePaginationModel model);
+        ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BasePaginationModel model);
+        ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BasePaginationModel model);
 
         ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model);
         ResultModel<List<GetAllSentMessageResultModel>> GetMessagesWithOneUser(GetAllMessageInputModel model);
@@ -39,5 +39,6 @@ namespace R.Services.IServices
         ResultModel<bool> ChangePassword(ChangePasswordInputModel model);
         ResultModel<bool> DeleteMessage(SelectedItemModel model);
         ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model);
+        long GetGender(string userId);
     }
 }

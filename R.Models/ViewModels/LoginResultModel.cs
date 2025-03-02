@@ -20,6 +20,7 @@ namespace R.Models.ViewModels
         public string BirthDate { get; set; }
         public int Age { get; set; }
         public string Gender { get; set; }
+        public long GenderId { get; set; }
         public string HealthStatus { get; set; }
         public string LiveType { get; set; }
         public string MarriageStatus { get; set; }

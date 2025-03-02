@@ -3,6 +3,7 @@ using R.Models.ViewModels;
 using R.Services.IServices;
 using R.Models;
 using R.Models.ViewModels.BaseModels;
+using R.Database.Entities;
 namespace R.Api.Controllers
 {
     [ApiController]
@@ -30,32 +31,32 @@ namespace R.Api.Controllers
 
 
         [HttpPost("GetBlockedUsers")]
-        public ResultModel<List<GetOneUserData>> GetBlockedUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetBlockedUsers(BasePaginationModel model)
         {
             var result = _service.GetBlockedUsers(model);
             return result;
         }
         [HttpPost("GetBlockedMeUsers")]
-        public ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BasePaginationModel model)
         {
             var result = _service.GetBlockedMeUsers(model);
             return result;
         }
 
         [HttpPost("GetFavoriteUsers")]
-        public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BasePaginationModel model)
         {
             var result = _service.GetFavoriteUsers(model);
             return result;
         }
         [HttpPost("GetFavoritedMeUsers")]
-        public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BasePaginationModel model)
         {
             var result = _service.GetFavoritedMeUsers(model);
             return result;
         }
         [HttpPost("LastUsersCheckedMe")]
-        public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BasePaginationModel model)
         {
             var result = _service.LastUsersCheckedMe(model);
             return result;
@@ -89,14 +90,42 @@ namespace R.Api.Controllers
         [HttpPost("GetMyAllMessages")]
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)
         {
-            return _service.GetMyAllMessages(model);
+            var result = _service.GetMyAllMessages(model);
+
+            if (result.Model == null)
+                return new ResultModel<List<GetMyAllMessagesResultModel>>(result.Model, true, "", 6969);
+
+
+            if (!result.Model.Any())
+                return new ResultModel<List<GetMyAllMessagesResultModel>>(result.Model, true, "", 6969);
+
+            if (result.Model.Count() == 0)
+                return new ResultModel<List<GetMyAllMessagesResultModel>>(result.Model, true, "", 6969);
+
+            return result;
         }
 
         [HttpPost("GetMessagesWithOneUser")]
         public ResultModel<List<GetAllSentMessageResultModel>> GetMessagesWithOneUser(GetAllMessageInputModel model)
         {
-            return _service.GetMessagesWithOneUser(model);
+
+            var result = _service.GetMessagesWithOneUser(model);
+
+            if (result.Model == null)
+                return new ResultModel<List<GetAllSentMessageResultModel>>(result.Model, true, "", 6969);
+
+
+            if (!result.Model.Any())
+                return new ResultModel<List<GetAllSentMessageResultModel>>(result.Model, true, "", 6969);
+
+            if (result.Model.Count() == 0)
+                return new ResultModel<List<GetAllSentMessageResultModel>>(result.Model, true, "", 6969);
+
+            return result;
+
         }
+
+
 
         [HttpPost("SendMessage")]
         public ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model)
@@ -148,9 +177,11 @@ namespace R.Api.Controllers
         [HttpGet("downloadProfilePhoto")]
         public async Task<IActionResult> DownloadProfilePicture(string userId)
         {
+            long g = _service.GetGender(userId);
             var result = _service.DownloadProfilePicture(userId);
             if (result == null)
-                return NotFound();
+                return Ok(new { photoExists = false, gender = g }); // کلید برای فرانت‌اند
+
             return File(result, "image/jpeg"); // یا image/png
         }
 

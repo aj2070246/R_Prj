@@ -14,6 +14,7 @@ using System.IO;
 using Microsoft.IdentityModel.Abstractions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
+using Microsoft.SqlServer.Server;
 
 
 
@@ -206,6 +207,7 @@ namespace R.Services.Services
                 if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
                     return new ResultModel<LoginResultModel>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
 
+                var cc = db.Database.GetConnectionString();
 
                 var user = db.Users.Where(x => x.UserName.ToLower() == model.UserName.ToLower() && x.Password == model.Password)
                     .Include(x => x.Gender)
@@ -216,7 +218,6 @@ namespace R.Services.Services
                     .Include(x => x.CarValue)
                     .Include(x => x.HomeValue)
                     .Include(x => x.MarriageStatus).FirstOrDefault();
-
 
                 if (user == null)
                 {
@@ -235,6 +236,7 @@ namespace R.Services.Services
                     Id = user.Id,
                     Age = age,
                     Gender = user.Gender.ItemValue,
+                    GenderId = user.Gender.Id,
                     Province = user.Province.ItemValue,
                     HealthStatus = user.HealthStatus.ItemValue,
                     LiveType = user.LiveType.ItemValue,
@@ -538,9 +540,9 @@ namespace R.Services.Services
                     }
                 }
                 model.PageIndex--;
-                var users = SerchQueryExecuter(query);
                 query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
                     $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+                var users = SerchQueryExecuter(query);
 
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
@@ -608,7 +610,7 @@ namespace R.Services.Services
                     SenderUserFullName = senderUser.FirstName + "  " + senderUser.LastName,
                 }).ToList();
 
-                string query = $" update UsersMessages set MessageStatusId =2 where SenderUserId ='{model.SenderUserId}' and ReceiverUserId = '{model.ReceiverUserId}' ";
+                string query = $" update UsersMessages set MessageStatusId =2 where SenderUserId ='{model.ReceiverUserId}' and ReceiverUserId = '{model.SenderUserId}' ";
 
                 using var connection = db.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
@@ -635,19 +637,25 @@ namespace R.Services.Services
         {
             try
             {
-                string query = $"with UnreadMessages as("
-        + " SELECT     ReceiverUserId,    SenderUserId, MAX(SendDate) AS LastReceivedMessageDate,"
-        + "    COUNT(CASE WHEN MessageStatusId = 1 THEN 1 END) AS UnreadMessagesCount"
-        + " FROM UsersMessages"
-        + $" where ReceiverUserId='{model.CurrentUserId}'"
-        + " GROUP BY ReceiverUserId, SenderUserId"
-        + " )"
-        + " select  CONCAT( uS.FirstName , ' ' , uS.LastName) sender ,"
-        + " CONCAT( uR.FirstName , ' ' , uR.LastName) receiver, UnreadMessages.*"
-        + " from UnreadMessages"
-        + " inner join Users uS on uS.Id= SenderUserId"
-        + " inner join Users uR on uR.Id= ReceiverUserId"
-        + " ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
+                string query = $"WITH UnreadMessages AS ( " +
+Environment.NewLine+$" SELECT " +
+Environment.NewLine+$"         CASE WHEN ReceiverUserId = '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END AS OtherUserId, " +
+Environment.NewLine+$"         MAX(SendDate) AS LastReceivedMessageDate, " +
+Environment.NewLine+$"         SUM(CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' AND MessageStatusId = 1 THEN 1 ELSE 0 END) AS UnreadMessagesCount" +
+Environment.NewLine+$"     FROM UsersMessages" +
+Environment.NewLine+$"     WHERE '{model.CurrentUserId}' IN (ReceiverUserId, SenderUserId)" +
+Environment.NewLine+$"     GROUP BY" +
+Environment.NewLine+$"         CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END" +
+Environment.NewLine+$" )" +
+Environment.NewLine+$" SELECT DISTINCT UnreadMessages.OtherUserId SenderUserId,ur.id ReceiverUserId, " +
+Environment.NewLine+$"        CONCAT(uS.FirstName, ' ', uS.LastName) AS sender," +
+Environment.NewLine+$"        CONCAT(uR.FirstName, ' ', uR.LastName) AS receiver," +
+Environment.NewLine+$"        UnreadMessages.UnreadMessagesCount AS umc," +
+Environment.NewLine+$"        UnreadMessages.LastReceivedMessageDate" +
+Environment.NewLine+$" FROM UnreadMessages" +
+Environment.NewLine+$" INNER JOIN Users uS ON uS.Id = UnreadMessages.OtherUserId" +
+Environment.NewLine+$" INNER JOIN Users uR ON uR.Id =  '{model.CurrentUserId}'" +
+Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
 
 
 
@@ -664,8 +672,10 @@ namespace R.Services.Services
                     var msg = new GetMyAllMessagesResultModel();
 
                     msg.SenderUserId = reader.GetString(reader.GetOrdinal("SenderUserId"));
+                    msg.ReceiverUserId = reader.GetString(reader.GetOrdinal("ReceiverUserId"));
                     msg.SenderName = reader.GetString(reader.GetOrdinal("sender"));
-                    msg.UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("UnreadMessagesCount"));
+                    msg.UnreadMessagesCount = Convert.ToInt16(reader.GetInt32(reader.GetOrdinal("umc")));
+
                     msg.LastReceivedMessageDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastReceivedMessageDate")));
 
                     msgs.Add(msg);
@@ -902,7 +912,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<List<GetOneUserData>> GetBlockedUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetBlockedUsers(BasePaginationModel model)
         {
             try
             {
@@ -911,6 +921,9 @@ namespace R.Services.Services
 
                 query += $" and u.id  in (  select blockedUserId from [dbo].[BlockedDataLog] where SourceUserId='{model.CurrentUserId}'   )";
                 var users = SerchQueryExecuter(query);
+                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
+                   $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
@@ -923,7 +936,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetBlockedMeUsers(BasePaginationModel model)
         {
 
             try
@@ -944,7 +957,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetFavoriteUsers(BasePaginationModel model)
         {
             try
             {
@@ -964,7 +977,7 @@ namespace R.Services.Services
 
         }
 
-        public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> GetFavoritedMeUsers(BasePaginationModel model)
         {
             try
             {
@@ -985,7 +998,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BaseInputModel model)
+        public ResultModel<List<GetOneUserData>> LastUsersCheckedMe(BasePaginationModel model)
         {
 
             try
@@ -1060,7 +1073,7 @@ namespace R.Services.Services
                 var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
                 var toAddress = new MailAddress(RecipientMail, receiverName);
                 string subject = IsResetPassword ? "رمز عبور جدید" : "کد تایید ایمیل";
-                
+
                 string body = $"{receiverName} عزیز {Environment.NewLine}";
                 body += IsResetPassword ? $" رمز عبور جدید شما: {Environment.NewLine}{VerifyCode}" : $"کد تایید ایمیل شما: {VerifyCode}\n\nاعتبار تا: {dateExpire}";
                 body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} {SiteName}";
@@ -1081,7 +1094,7 @@ namespace R.Services.Services
                     Subject = subject,
                     Body = body,
                     IsBodyHtml = false
-                    
+
                 })
                 {
                     message.Bcc.Add(fromAddress);
@@ -1258,6 +1271,11 @@ namespace R.Services.Services
                 return new ResultModel<int>(false);
 
             }
+        }
+
+        public long GetGender(string userId)
+        {
+           return db.Users.Find(userId).GenderId;
         }
 
 
