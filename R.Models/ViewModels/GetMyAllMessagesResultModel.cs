@@ -13,5 +13,6 @@ namespace R.Models.ViewModels
         public string SenderName { get; set; }
         public string LastReceivedMessageDate { get; set; }
         public int UnreadMessagesCount { get; set; } 
+        public long GenderId { get; set; }
     }
 }

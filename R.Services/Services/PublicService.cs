@@ -146,6 +146,7 @@ namespace R.Services.Services
                         FirstCheildAge = user.FirstCheildAge,
                         ZibaeeNumber = user.ZibaeeNumber,
                         TipNUmber = user.TipNUmber,
+                        GenderId = user.GenderId
                     };
                     result.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
                     result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
@@ -489,8 +490,8 @@ namespace R.Services.Services
                 string query = $" declare  @genderId int = (select top 1 GenderId from Users where id='{model.CurrentUserId}')  ";
 
                 query += BaseSearchQuery();
-
-                query += "   and u.GenderId <> @genderId " + Environment.NewLine;
+                if (!string.IsNullOrEmpty(model.CurrentUserId))
+                    query += "   and u.GenderId <> @genderId " + Environment.NewLine;
 
                 if (true)
                 {
@@ -638,24 +639,24 @@ namespace R.Services.Services
             try
             {
                 string query = $"WITH UnreadMessages AS ( " +
-Environment.NewLine+$" SELECT " +
-Environment.NewLine+$"         CASE WHEN ReceiverUserId = '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END AS OtherUserId, " +
-Environment.NewLine+$"         MAX(SendDate) AS LastReceivedMessageDate, " +
-Environment.NewLine+$"         SUM(CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' AND MessageStatusId = 1 THEN 1 ELSE 0 END) AS UnreadMessagesCount" +
-Environment.NewLine+$"     FROM UsersMessages" +
-Environment.NewLine+$"     WHERE '{model.CurrentUserId}' IN (ReceiverUserId, SenderUserId)" +
-Environment.NewLine+$"     GROUP BY" +
-Environment.NewLine+$"         CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END" +
-Environment.NewLine+$" )" +
-Environment.NewLine+$" SELECT DISTINCT UnreadMessages.OtherUserId SenderUserId,ur.id ReceiverUserId, " +
-Environment.NewLine+$"        CONCAT(uS.FirstName, ' ', uS.LastName) AS sender," +
-Environment.NewLine+$"        CONCAT(uR.FirstName, ' ', uR.LastName) AS receiver," +
-Environment.NewLine+$"        UnreadMessages.UnreadMessagesCount AS umc," +
-Environment.NewLine+$"        UnreadMessages.LastReceivedMessageDate" +
-Environment.NewLine+$" FROM UnreadMessages" +
-Environment.NewLine+$" INNER JOIN Users uS ON uS.Id = UnreadMessages.OtherUserId" +
-Environment.NewLine+$" INNER JOIN Users uR ON uR.Id =  '{model.CurrentUserId}'" +
-Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
+Environment.NewLine + $" SELECT " +
+Environment.NewLine + $"         CASE WHEN ReceiverUserId = '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END AS OtherUserId, " +
+Environment.NewLine + $"         MAX(SendDate) AS LastReceivedMessageDate, " +
+Environment.NewLine + $"         SUM(CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' AND MessageStatusId = 1 THEN 1 ELSE 0 END) AS UnreadMessagesCount" +
+Environment.NewLine + $"     FROM UsersMessages" +
+Environment.NewLine + $"     WHERE '{model.CurrentUserId}' IN (ReceiverUserId, SenderUserId)" +
+Environment.NewLine + $"     GROUP BY" +
+Environment.NewLine + $"         CASE WHEN ReceiverUserId =  '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END" +
+Environment.NewLine + $" )" +
+Environment.NewLine + $" SELECT DISTINCT UnreadMessages.OtherUserId SenderUserId,ur.id ReceiverUserId,  us.genderId genderId," +
+Environment.NewLine + $"        CONCAT(uS.FirstName, ' ', uS.LastName) AS sender," +
+Environment.NewLine + $"        CONCAT(uR.FirstName, ' ', uR.LastName) AS receiver," +
+Environment.NewLine + $"        UnreadMessages.UnreadMessagesCount AS umc," +
+Environment.NewLine + $"        UnreadMessages.LastReceivedMessageDate" +
+Environment.NewLine + $" FROM UnreadMessages" +
+Environment.NewLine + $" INNER JOIN Users uS ON uS.Id = UnreadMessages.OtherUserId" +
+Environment.NewLine + $" INNER JOIN Users uR ON uR.Id =  '{model.CurrentUserId}'" +
+Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDate DESC";
 
 
 
@@ -675,6 +676,7 @@ Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDat
                     msg.ReceiverUserId = reader.GetString(reader.GetOrdinal("ReceiverUserId"));
                     msg.SenderName = reader.GetString(reader.GetOrdinal("sender"));
                     msg.UnreadMessagesCount = Convert.ToInt16(reader.GetInt32(reader.GetOrdinal("umc")));
+                    msg.GenderId = Convert.ToInt64(reader.GetInt64(reader.GetOrdinal("genderId")));
 
                     msg.LastReceivedMessageDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("LastReceivedMessageDate")));
 
@@ -1168,6 +1170,7 @@ Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDat
                     user.RDescription = reader.IsDBNull(reader.GetOrdinal("RDescription")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("RDescription"));
                     user.BirthDate = Helper.Miladi2Shamsi(reader.GetDateTime(reader.GetOrdinal("BirthDate")));
                     user.Age = reader.GetInt32("age");
+                    user.GenderId = reader.GetInt64("genderId");
                     user.Gender = reader.GetString(reader.GetOrdinal("Gender"));
                     user.HealthStatus = reader.IsDBNull(reader.GetOrdinal("HealthStatus")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("HealthStatus"));
                     user.LiveType = reader.IsDBNull(reader.GetOrdinal("LiveType")) ? "نامشخص" : reader.GetString(reader.GetOrdinal("LiveType"));
@@ -1275,7 +1278,18 @@ Environment.NewLine+$" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageDat
 
         public long GetGender(string userId)
         {
-           return db.Users.Find(userId).GenderId;
+            try
+            {
+                var user = db.Users.Find(userId);
+                if (user == null)
+                    return -1;
+                return user.GenderId;
+
+            }
+            catch (Exception)
+            {
+                return -1;
+            }
         }
 
 
