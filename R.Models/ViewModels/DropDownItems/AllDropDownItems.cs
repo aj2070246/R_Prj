@@ -33,7 +33,7 @@ namespace R.Models.ViewModels.DropDownItems
                 },
             };
             OnlineStatus = new List<GetAllOnlineStatusModel>(){
-                new GetAllOnlineStatusModel
+                 new GetAllOnlineStatusModel
                 {
                     Id =1 ,
                     ItemValue = "فقط کاربران آنلاین"
@@ -54,8 +54,8 @@ namespace R.Models.ViewModels.DropDownItems
             {
                 Vazn.Add(new GetAllVazn() { Id = i, ItemValue = i.ToString() });
             }
-            CheildCount = new List<GetAllCheildCount>();
-            for (int i = 0; i < 10; i++)
+            CheildCount = new List<GetAllCheildCount>() { new GetAllCheildCount { Id = 0, ItemValue = "بدون فرزند" } };
+            for (int i = 1; i < 10; i++)
             {
                 CheildCount.Add(new GetAllCheildCount() { Id = i, ItemValue = i.ToString() });
             }

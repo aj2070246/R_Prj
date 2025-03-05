@@ -20,5 +20,6 @@ namespace R.Models.ViewModels
         public long HomeValueId { get; set; }
         public long ProfilePhotoId { get; set; }
         public long OnlineStatusId { get; set; }
+        public long CheildCountId { get; set; }
     }
 }

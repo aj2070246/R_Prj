@@ -505,34 +505,34 @@ namespace R.Services.Services
 
                 if (true)
                 {
-                    if (model.ProvinceId != 0)
+                    if (model.ProvinceId > 0)
                         query += $" {Environment.NewLine} and provinceId = {model.ProvinceId}";
 
-                    if (model.AgeIdTo != 0)
+                    if (model.AgeIdTo > 0)
                         query += $" {Environment.NewLine} and DATEDIFF(YEAR, BirthDate, GETDATE()) <= {model.AgeIdTo}";
 
-                    if (model.AgeIdFrom != 0)
+                    if (model.AgeIdFrom > 0)
                         query += $"  {Environment.NewLine} and DATEDIFF(YEAR, BirthDate, GETDATE()) >= {model.AgeIdFrom}";
 
-                    if (model.LiveTypeId != 0)
+                    if (model.LiveTypeId > 0)
                         query += $" {Environment.NewLine} and l.id = {model.LiveTypeId}";
 
-                    if (model.HealthStatusId != 0)
+                    if (model.HealthStatusId > 0)
                         query += $" {Environment.NewLine} and h.id = {model.HealthStatusId}";
 
-                    if (model.MarriageStatusId != 0)
+                    if (model.MarriageStatusId > 0)
                         query += $" {Environment.NewLine} and m.id = {model.MarriageStatusId}";
 
-                    if (model.IncomeId != 0)
+                    if (model.IncomeId > 0)
                         query += $" {Environment.NewLine} and i.id = {model.IncomeId}";
 
-                    if (model.CarValueId != 0)
+                    if (model.CarValueId > 0)
                         query += $" {Environment.NewLine} and c.id = {model.CarValueId}";
 
-                    if (model.HomeValueId != 0)
+                    if (model.HomeValueId > 0)
                         query += $" {Environment.NewLine} and ho.id = {model.HomeValueId}";
 
-                    if (model.ProfilePhotoId != 0)
+                    if (model.ProfilePhotoId > 0)
                     {
                         if (model.ProfilePhotoId == 1)
                             query += $" {Environment.NewLine} and u.ProfilePicture IS NOT NULL ";
@@ -541,7 +541,7 @@ namespace R.Services.Services
                             query += $" {Environment.NewLine} and u.ProfilePicture IS NULL ";
                     }
 
-                    if (model.OnlineStatusId != 0)
+                    if (model.OnlineStatusId > 0)
                     {
                         if (model.OnlineStatusId == 1)
                             query += $" {Environment.NewLine} and u.LastActivityDate >= DATEADD(MINUTE, -5, GETDATE()) ";
@@ -549,6 +549,10 @@ namespace R.Services.Services
                         else if (model.OnlineStatusId == 2)
                             query += $" {Environment.NewLine}  and u.LastActivityDate >= DATEADD(MINUTE, 60 , GETDATE())";
                     }
+
+                    if (model.CheildCountId >= 0)
+                        query += $" {Environment.NewLine}  and u.CheildCount <= {model.CheildCountId} ";
+
                 }
                 model.PageIndex--;
                 query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
