@@ -85,7 +85,7 @@ namespace R.Api.Controllers
         public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
         {
             return _service.GetCountOfUnreadMessages(model);
-        } 
+        }
         [HttpPost("GetMyAllMessages")]
         public ResultModel<List<GetMyAllMessagesResultModel>> GetMyAllMessages(SelectedItemModel model)
         {
@@ -161,15 +161,37 @@ namespace R.Api.Controllers
         public async Task<IActionResult> UploadProfilePicture(UploadFileInputModel model)
         {
 
+            if (model.File == null)
+                return Ok(new ResultModel<bool>(false, false, "فایل ارسال نشده است."));
+
+            string fileName = model.File.FileName; // نام فایل همراه با پسوند
+            string extension = Path.GetExtension(fileName); // پسوند فایل (مثل .jpg, .png)
+            string contentType = model.File.ContentType; // نوع MIME (مثلاً image/jpeg)
+            long fileSize = model.File.Length; // اندازه فایل به بایت
+
+            if (fileSize == 0)
+                return Ok(new ResultModel<bool>(false, false, "فایل ارسال نشده است."));
+
+
+            if (fileSize > 5 * 1024 * 1024) // بیشتر از 5MB
+                return Ok(new ResultModel<bool>(false, false, "حجم فایل حداکثر 5 مگابایت است"));
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+            if (!allowedExtensions.Contains(extension.ToLower()))
+                return Ok(new ResultModel<bool>(false, false, "فایل نامعتیر.... پسوند های مجاز " + ".jpg | .jpeg | .png | .gif"));
+
+
             using var memoryStream = new MemoryStream();
             await model.File.CopyToAsync(memoryStream);
             byte[] fileBytes = memoryStream.ToArray();
-            _service.UploadProfilePhoto(new ProfilePhotoModel
+            var result = _service.UploadProfilePhoto(new ProfilePhotoModel
             {
                 ProfilePhoto = fileBytes,
                 CurrentUserId = model.CurrentUserId
             });
-            return Ok(new { message = "opload ok" });
+
+            return Ok(result);
+
         }
 
 

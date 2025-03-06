@@ -14,7 +14,8 @@ namespace R.Services.IServices
     {
         public AllDropDownItems GetAllDropDownItems();
         ResultModel<LoginResultModel> login(LoginInputModel model);
-        byte[] UploadProfilePhoto(ProfilePhotoModel model);
+        ResultModel<bool> UploadProfilePhoto(ProfilePhotoModel model);
+
         ResultModel<bool> RegisterUser(RegisterUserInputModel model);
         ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model);
         bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel);

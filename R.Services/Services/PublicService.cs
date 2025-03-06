@@ -707,8 +707,11 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             }
         }
 
-        public byte[] UploadProfilePhoto(ProfilePhotoModel model)
+        public ResultModel<bool> UploadProfilePhoto(ProfilePhotoModel model)
         {
+            if (model.ProfilePhoto.Length > 5 * 1024 * 1024)
+                return new ResultModel<bool>(false, false, "فایل ارسال نشده است.");
+
             try
             {
                 var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
@@ -716,13 +719,14 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 {
                     user.ProfilePicture = model.ProfilePhoto;
                     db.SaveChanges();
-                    return DownloadProfilePicture(model.CurrentUserId);
                 }
-                return null;
+            return    new ResultModel<bool>(true, true);
+
             }
             catch (Exception e)
             {
-                return null;
+               return new ResultModel<bool>(false,false);
+
 
             }
         }
@@ -829,7 +833,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                     return new ResultModel<GetMyProfileInfoResultModel>(false);
 
                 var user = new GetMyProfileInfoResultModel();
-
+                user.GenderId = entity.GenderId;
                 user.FirstName = entity.FirstName;
                 user.LastName = entity.LastName;
                 user.Mobile = entity.Mobile;
@@ -1046,7 +1050,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 #if DEBUG
             return new ResultModel<bool>(true, true);
 #endif
-            if (CaptchaValue == "mmmmm")
+            if (CaptchaValue.ToLower() == "mmmmm")
                 return new ResultModel<bool>(true, true);
 
             if (string.IsNullOrEmpty(CaptchaValue) || string.IsNullOrEmpty(CaptchaId) || CaptchaValue == null || CaptchaId == null)

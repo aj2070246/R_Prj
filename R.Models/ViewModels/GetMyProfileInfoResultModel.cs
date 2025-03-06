@@ -9,6 +9,7 @@ namespace R.Models.ViewModels
     public class GetMyProfileInfoResultModel
     {
         public string Id { get; set; }
+        public long GenderId { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string MyDescription { get; set; }

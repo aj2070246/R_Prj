@@ -12,10 +12,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options =>
 {
     options.ListenAnyIP(5000); // به جای localhost از AnyIP استفاده کن
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10MB
+
 });
 
 
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+
 
 builder.Services.AddCors(options =>
 {
@@ -36,8 +39,11 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IPublicService, PublicService>();
 
+
+
 builder.Services.AddDbContext<RDbContext>(options =>
             options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+
         );
 var app = builder.Build();
 
