@@ -560,11 +560,11 @@ namespace R.Services.Services
 
                 var users = SerchQueryExecuter(query);
 
-                if (users.Count() >30)
+                if (users.Count() > 30)
+                {
                     query += $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
-
-                users = SerchQueryExecuter(query);
-
+                    users = SerchQueryExecuter(query);
+                }
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
 
