@@ -554,7 +554,6 @@ namespace R.Services.Services
                         query += $" {Environment.NewLine}  and u.CheildCount <= {model.CheildCountId} ";
 
                 }
-                model.PageIndex--;
                 query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
                     $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
                 var users = SerchQueryExecuter(query);

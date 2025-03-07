@@ -9,6 +9,7 @@ namespace R.Models.ViewModels
 {
     public class SearchUsersInputModel: BasePaginationModel
     {
+
         public long AgeIdFrom { get; set; }
         public long AgeIdTo { get; set; }
         public long HealthStatusId { get; set; }

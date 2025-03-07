@@ -4,8 +4,11 @@ using R.Services.IServices;
 using R.Models;
 using R.Models.ViewModels.BaseModels;
 using R.Database.Entities;
+using SixLabors.ImageSharp;
 namespace R.Api.Controllers
 {
+    //dotnet publish --configuration Release --runtime linux-x64 --self-contained false -o./publish
+
     [ApiController]
     [Route("[controller]")]
     public class ConnectionController : ControllerBase
@@ -28,6 +31,8 @@ namespace R.Api.Controllers
             var result = _service.SearchUsers(model);
             return result;
         }
+
+
 
 
         [HttpPost("GetBlockedUsers")]
