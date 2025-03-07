@@ -550,13 +550,20 @@ namespace R.Services.Services
                             query += $" {Environment.NewLine}  and u.LastActivityDate >= DATEADD(MINUTE, 60 , GETDATE())";
                     }
 
-                    if (model.CheildCountId >= 0)
-                        query += $" {Environment.NewLine}  and u.CheildCount <= {model.CheildCountId} ";
+                    if (model.CheildCountId != -1)
+                        query += $" {Environment.NewLine}  and u.CheildCount = {model.CheildCountId} ";
 
                 }
-                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} " +
-                    $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} ";
+
+
+
                 var users = SerchQueryExecuter(query);
+
+                if (users.Count() >30)
+                    query += $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+
+                users = SerchQueryExecuter(query);
 
                 if (users.Count() == 0)
                     return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
@@ -719,12 +726,12 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                     user.ProfilePicture = model.ProfilePhoto;
                     db.SaveChanges();
                 }
-            return    new ResultModel<bool>(true, true);
+                return new ResultModel<bool>(true, true);
 
             }
             catch (Exception e)
             {
-               return new ResultModel<bool>(false,false);
+                return new ResultModel<bool>(false, false);
 
 
             }
