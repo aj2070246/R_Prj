@@ -106,6 +106,9 @@ namespace R.Services.Services
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
+            if (model.StringId == "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287" ||
+                  model.CurrentUserId == "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287")
+                return new ResultModel<GetOneUserData>(false);
 
             try
             {
@@ -257,6 +260,7 @@ namespace R.Services.Services
                 loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                 loginResultModel.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
 
+                sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.login);
                 return new ResultModel<LoginResultModel>(loginResultModel);
 
             }
@@ -304,7 +308,7 @@ namespace R.Services.Services
                 var id = Guid.NewGuid().ToString();
                 var age = (DateTime.Now.Year - model.BirthDate.Year);
 
-                db.Users.Add(new RUsers
+                var user = new RUsers
                 {
                     Id = id,
                     FirstName = model.FirstName,
@@ -338,8 +342,18 @@ namespace R.Services.Services
                     FirstCheildAge = model.FirstCheildAge,
                     ZibaeeNumber = model.ZibaeeNumber,
                     TipNUmber = model.TipNUmber,
-                });
+                };
+                db.Users.Add(user);
                 db.SaveChanges();
+
+                SendMessage(new SendMessageInputModel()
+                {
+                    SenderUserId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287",
+                    ReceiverUserId = user.Id,
+                    MessageText = "به همسریار خوش آمدید" + Environment.NewLine + " با بیان دیدگاه خود ما را در ارائه خدمات بهتر یاری بفرمایید " + Environment.NewLine + "مدیریت همسریار"
+                });
+
+                sendAppEmails(user.EmailAddress, user.FirstName,  SendEmailType.wellcome);
                 return new ResultModel<bool>(true, true);
 
             }
@@ -556,17 +570,14 @@ namespace R.Services.Services
                 }
                 query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} ";
 
-
-
-                var users = SerchQueryExecuter(query);
-
-                if (users.Count() > 30)
+                if (model.PageIndex == 0)
                 {
-                    query += $" OFFSET {model.PageIndex * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
-                    users = SerchQueryExecuter(query);
+
                 }
-                if (users.Count() == 0)
-                    return new ResultModel<List<GetOneUserData>>(false, "موردی یافت نشد");
+
+                var ordrQuery = query + $" OFFSET {(model.PageIndex - 1) * 20} ROWS FETCH NEXT 20 ROWS ONLY ";
+
+                var users = SerchQueryExecuter(ordrQuery);
 
                 return new ResultModel<List<GetOneUserData>>(users);
 
@@ -593,6 +604,17 @@ namespace R.Services.Services
                 });
                 db.SaveChanges();
 
+                var receiver = db.Users.FirstOrDefault(x => x.Id == model.ReceiverUserId);
+                if (receiver != null)
+                {
+                    if (receiver.EmailAddressStatusId == 3 && !string.IsNullOrEmpty(receiver.EmailAddress))
+                    {
+                        var sender = db.Users.FirstOrDefault(x => x.Id == model.SenderUserId);
+                        sendAppEmails(receiver.EmailAddress, receiver.FirstName, SendEmailType.newMessage, $" شما پیام جدیدی از {sender.FirstName} دارید");
+                    }
+                }
+
+
                 return GetMessagesWithOneUser(new GetAllMessageInputModel()
                 {
                     ReceiverUserId = model.ReceiverUserId,
@@ -606,6 +628,7 @@ namespace R.Services.Services
         }
         public ResultModel<List<GetAllSentMessageResultModel>> GetMessagesWithOneUser(GetAllMessageInputModel model)
         {
+
             try
             {
 
@@ -1174,14 +1197,13 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
         private List<GetOneUserData> SerchQueryExecuter(string query, bool getMeLog = false)
         {
-
+            var users = new List<GetOneUserData>();
             try
             {
                 using var connection = db.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
-                var users = new List<GetOneUserData>();
                 connection.Open();
 
                 using var reader = command.ExecuteReader();
@@ -1218,7 +1240,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             }
             catch (Exception e)
             {
-                return null;
+                return users;
             }
         }
 
@@ -1280,7 +1302,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
         {
             try
             {
-                string query = $"select count(id) UnreadMessagesCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
+                string query = $"select count(id) as UnreadMessagesCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
 
 
                 int UnreadMessagesCount = 0;
@@ -1293,7 +1315,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 using var reader = command.ExecuteReader();
                 while (reader.Read())
                 {
-                    UnreadMessagesCount = Convert.ToInt16(reader.GetOrdinal("UnreadMessagesCount"));
+                    UnreadMessagesCount = reader.GetInt32(reader.GetOrdinal("UnreadMessagesCount"));
                 }
 
                 connection.Close();
@@ -1325,5 +1347,99 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
 
         #endregion
+
+        private async Task<ResultModel<bool>> sendAppEmails(string receiverEmail, string receiverName, SendEmailType msgType, string postfixBody = "")
+        {
+
+
+            try
+            {
+                var SenderEmail = _configuration["SenderEmailInfo:SenderEmail"];
+                string SenderEmailAppPassword = _configuration["SenderEmailInfo:SenderEmailAppPassword"];
+                var SenderEmailFullName = _configuration["SenderEmailInfo:SenderEmailFullName"];
+                var SiteName = _configuration["SenderEmailInfo:SiteName"];
+
+                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
+                var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
+                var toAddress = new MailAddress(receiverEmail, receiverName);
+                string subject = "";
+                string body = "";
+                switch (msgType)
+                {
+                    case SendEmailType.wellcome:
+                        {
+                            subject = "خوش آمدید";
+                            body = $"{receiverName} عزیز {Environment.NewLine}";
+                            body += "به همسریار خوش آمدید . " + Environment.NewLine;
+                            body += "کلیه سرویس های این وب سایت رایگان میباشد . " + Environment.NewLine;
+                        }
+                        break;
+                    case SendEmailType.newMessage:
+                        {
+                            subject = "پیام جدید";
+                            body = $"{receiverName} عزیز {Environment.NewLine}";
+                            body += postfixBody;
+                        }
+                        break;
+
+                    case SendEmailType.login:
+                        {
+                            subject = ",ورود به سایت";
+                            body = $"{receiverName} عزیز {Environment.NewLine}";
+                            body += "کاربری شما به سایت همسریاب لاگین کرده است"+Environment.NewLine;
+                            body += "در صورتی که این دسترسی غیر مجاز است"+ Environment.NewLine;
+                            body += "سریعا به سایت مراجعه فرموده و کلمه عبور خود را تغییر دهید"+ Environment.NewLine;
+                            body += "تا از هر گونه سرقت اطلاعات مصون بمانید" + Environment.NewLine;
+                        }
+                        break;
+
+                    default:
+                        break;
+                }
+
+                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} همسریار";
+
+                var smtp = new SmtpClient
+                {
+                    Host = "smtp.gmail.com",
+                    Port = 587,
+                    EnableSsl = true,
+                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                    UseDefaultCredentials = false,
+                    Credentials = new NetworkCredential(fromAddress.Address, SenderEmailAppPassword),
+                    Timeout = 20000
+                };
+
+                using (var message = new MailMessage(fromAddress, toAddress)
+                {
+                    Subject = subject,
+                    Body = body,
+                    IsBodyHtml = false
+
+                })
+                {
+                    message.Bcc.Add(fromAddress);
+                    await smtp.SendMailAsync(message);
+                    Console.WriteLine("Email sent successfully.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
+                return new ResultModel<bool>(false, ex.Message);
+            }
+
+
+            return new ResultModel<bool>(true, true);
+
+        }
+
+        private enum SendEmailType
+        {
+            wellcome,
+            newMessage,
+            login,
+        }
     }
+
 }
