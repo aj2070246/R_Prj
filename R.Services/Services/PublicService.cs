@@ -353,7 +353,7 @@ namespace R.Services.Services
                     MessageText = "به همسریار خوش آمدید" + Environment.NewLine + " با بیان دیدگاه خود ما را در ارائه خدمات بهتر یاری بفرمایید " + Environment.NewLine + "مدیریت همسریار"
                 });
 
-                sendAppEmails(user.EmailAddress, user.FirstName,  SendEmailType.wellcome);
+                sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.wellcome);
                 return new ResultModel<bool>(true, true);
 
             }
@@ -1386,9 +1386,9 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                         {
                             subject = ",ورود به سایت";
                             body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += "کاربری شما به سایت همسریاب لاگین کرده است"+Environment.NewLine;
-                            body += "در صورتی که این دسترسی غیر مجاز است"+ Environment.NewLine;
-                            body += "سریعا به سایت مراجعه فرموده و کلمه عبور خود را تغییر دهید"+ Environment.NewLine;
+                            body += "کاربری شما به سایت همسریاب لاگین کرده است" + Environment.NewLine;
+                            body += "در صورتی که این دسترسی غیر مجاز است" + Environment.NewLine;
+                            body += "سریعا به سایت مراجعه فرموده و کلمه عبور خود را تغییر دهید" + Environment.NewLine;
                             body += "تا از هر گونه سرقت اطلاعات مصون بمانید" + Environment.NewLine;
                         }
                         break;
@@ -1432,6 +1432,34 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
             return new ResultModel<bool>(true, true);
 
+        }
+
+        public ResultModel<bool> SendReport(SendReport model)
+        {
+            try
+            {
+
+                var id = Guid.NewGuid().ToString();
+
+                var entity = new UsersMessages()
+                {
+                    Id = id,
+                    MessageStatusId = 1,
+                    MessageText = "پلیس محترم سایت همسریار، این  کاربر دارای تخلف در پروفایل یا چت میباشد. لطفا پیگیری نمایید" + Environment.NewLine + "ای دی کاربر متخلف" + Environment.NewLine + model.ReportedUserId,
+                    ReceiverUserId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287",
+                    SendDate = DateTime.Now,
+                    SenderUserId = model.CurrentUserId
+                };
+                db.UsersMessages.Add(entity);
+                db.SaveChanges();
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false);
+
+            }
         }
 
         private enum SendEmailType

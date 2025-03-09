@@ -7,7 +7,9 @@ using R.Database.Entities;
 using SixLabors.ImageSharp;
 namespace R.Api.Controllers
 {
-    //dotnet publish --configuration Release --runtime linux-x64 --self-contained false -o./publish
+    //dotnet publish --configuration Release --runtime linux-x64 --self-contained=false -o ./publish
+    //sudo systemctl restart nginx
+
 
     [ApiController]
     [Route("[controller]")]
@@ -130,6 +132,13 @@ namespace R.Api.Controllers
         }
 
 
+
+        [HttpPost("SendReport")]
+        public ResultModel<bool> SendMessage(SendReport model)
+        {
+            return _service.SendReport(model);
+        }
+        
 
         [HttpPost("SendMessage")]
         public ResultModel<List<GetAllSentMessageResultModel>> SendMessage(SendMessageInputModel model)
