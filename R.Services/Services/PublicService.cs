@@ -106,9 +106,10 @@ namespace R.Services.Services
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
-            if (model.StringId == "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287" ||
-                  model.CurrentUserId == "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287")
+            string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
+            if (model.StringId == adminId || model.CurrentUserId == adminId)
                 return new ResultModel<GetOneUserData>(false);
+
 
             try
             {
@@ -154,20 +155,23 @@ namespace R.Services.Services
                     result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                     result.RangePoost = GetRangePoost(user.RangePoost);
 
-                    var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                    var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.StringId && x.BlockedUserId == model.CurrentUserId);
                     result.IsBlocked = isBlocked;
+                    result.IBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                    result.IFavorited = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
 
-                    var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
+                    var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.StringId && x.FavoritedUserId == model.CurrentUserId);
                     result.IsFavorite = isfavorite;
 
-
-                    db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
+                    if (!string.IsNullOrEmpty(model.CurrentUserId))
                     {
-                        RUsersId = model.StringId,
-                        UserId_CheckedMe = model.CurrentUserId
-                    });
-                    db.SaveChanges();
-
+                        db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
+                        {
+                            RUsersId = model.StringId,
+                            UserId_CheckedMe = model.CurrentUserId
+                        });
+                        db.SaveChanges();
+                    }
                     return new ResultModel<GetOneUserData>(result);
                 }
 
@@ -304,7 +308,11 @@ namespace R.Services.Services
                 if (douplicated)
                     return new ResultModel<bool>(false, "پست الکترونیک به کاربر دیگری اختصاص یافته است");
 
-
+                if (model.CheildCount == 120)
+                {
+                    model.CheildCount = 0;
+                    model.FirstCheildAge = "0";
+                }
                 var id = Guid.NewGuid().ToString();
                 var age = (DateTime.Now.Year - model.BirthDate.Year);
 
@@ -339,10 +347,19 @@ namespace R.Services.Services
                     Vazn = model.Vazn,
                     RangePoost = model.RangePoost,
                     CheildCount = model.CheildCount,
-                    FirstCheildAge = model.FirstCheildAge,
+                    //FirstCheildAge = model.FirstCheildAge,
                     ZibaeeNumber = model.ZibaeeNumber,
                     TipNUmber = model.TipNUmber,
+                    LastActivityDate = DateTime.Now,
                 };
+                try
+                {
+                    user.FirstCheildAge = string.IsNullOrEmpty(model.FirstCheildAge) ? 0 : Convert.ToInt32(model.FirstCheildAge);
+                }
+                catch (Exception e)
+                {
+                    user.FirstCheildAge = 0; ;
+                }
                 db.Users.Add(user);
                 db.SaveChanges();
 
@@ -398,6 +415,11 @@ namespace R.Services.Services
                 if (user == null)
                     return new ResultModel<bool>(false, "کاربر یافت نشد");
 
+                if (model.CheildCount == 120)
+                {
+                    model.FirstCheildAge = "0";
+                    model.CheildCount = 0;
+                }
                 user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
                 user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
                 user.FirstName = model.FirstName;
@@ -420,7 +442,7 @@ namespace R.Services.Services
                 user.Vazn = model.Vazn;
                 user.RangePoost = model.RangePoost;
                 user.CheildCount = model.CheildCount;
-                user.FirstCheildAge = model.FirstCheildAge;
+                user.FirstCheildAge = string.IsNullOrEmpty(model.FirstCheildAge) ? 0 : Convert.ToInt32(model.FirstCheildAge);
                 user.ZibaeeNumber = model.ZibaeeNumber;
                 user.TipNUmber = model.TipNUmber;
 
@@ -497,7 +519,18 @@ namespace R.Services.Services
                     CaptchaValue = saveCaptchaInputModel.CaptchaValue,
                     ExpireDate = DateTime.Now.AddMinutes(3)
                 });
+
                 db.SaveChanges();
+
+                string query = $" delete from Captchas where ExpireDate < DATEADD(MINUTE,-10,getdate()) ";
+
+                using var connection = db.Database.GetDbConnection();
+                using var command = connection.CreateCommand();
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                connection.Open();
+                command.ExecuteReader();
+                connection.Close();
                 return true;
             }
             catch (Exception e)
@@ -564,11 +597,11 @@ namespace R.Services.Services
                             query += $" {Environment.NewLine}  and u.LastActivityDate >= DATEADD(MINUTE, 60 , GETDATE())";
                     }
 
-                    if (model.CheildCountId != -1)
+                    if (model.CheildCountId > 0 && model.CheildCountId != 120)
                         query += $" {Environment.NewLine}  and u.CheildCount = {model.CheildCountId} ";
 
                 }
-                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate    {Environment.NewLine} ";
+                query += $"  {Environment.NewLine} ORDER BY u.LastActivityDate   desc  {Environment.NewLine} ";
 
                 if (model.PageIndex == 0)
                 {
@@ -1460,6 +1493,11 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 return new ResultModel<bool>(false, false);
 
             }
+        }
+
+        public List<string> getAllUserIds()
+        {
+            return db.Users.Select(x => x.Id).ToList();
         }
 
         private enum SendEmailType

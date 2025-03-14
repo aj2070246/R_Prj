@@ -42,5 +42,6 @@ namespace R.Services.IServices
         ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model);
         long GetGender(string userId);
         ResultModel<bool> SendReport(SendReport model);
+        List<string> getAllUserIds();
     }
 }

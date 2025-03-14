@@ -36,5 +36,7 @@ namespace R.Models.ViewModels
         public int ZibaeeNumber { get; set; }
         public int TipNUmber { get; set; }
         public string RangePoost { get; set; }
+        public bool IBlocked { get; set; }
+        public bool IFavorited { get; set; }
     }
 }

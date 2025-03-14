@@ -54,7 +54,7 @@ namespace R.Models.ViewModels.DropDownItems
             {
                 Vazn.Add(new GetAllVazn() { Id = i, ItemValue = i.ToString() });
             }
-            CheildCount = new List<GetAllCheildCount>() { new GetAllCheildCount { Id = 0, ItemValue = "بدون فرزند" } };
+            CheildCount = new List<GetAllCheildCount>() { new GetAllCheildCount { Id = 120, ItemValue = "بدون فرزند" } };
             for (int i = 1; i < 10; i++)
             {
                 CheildCount.Add(new GetAllCheildCount() { Id = i, ItemValue = i.ToString() });
@@ -88,12 +88,12 @@ namespace R.Models.ViewModels.DropDownItems
                 }
             };
             ZibaeeNumber = new List<GetAllGhad>();
-            for (int i = 1; i < 5; i++)
+            for (int i = 1; i <= 5; i++)
             {
                 ZibaeeNumber.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
             }
             TipNumber = new List<GetAllGhad>();
-            for (int i = 1; i < 5; i++)
+            for (int i = 1; i <= 5; i++)
             {
                 TipNumber.Add(new GetAllGhad() { Id = i, ItemValue = i.ToString() });
             }

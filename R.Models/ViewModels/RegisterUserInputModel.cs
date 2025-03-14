@@ -35,7 +35,7 @@ namespace R.Models.ViewModels
         public int Vazn { get; set; }
         public int RangePoost { get; set; }
         public int CheildCount { get; set; }
-        public int FirstCheildAge { get; set; }
+        public string? FirstCheildAge { get; set; }
         public int ZibaeeNumber { get; set; }
         public int TipNUmber { get; set; }
     }
@@ -66,7 +66,7 @@ namespace R.Models.ViewModels
         public int Vazn { get; set; }
         public int RangePoost { get; set; }
         public int CheildCount { get; set; }
-        public int FirstCheildAge { get; set; }
+        public string? FirstCheildAge { get; set; }
         public int ZibaeeNumber { get; set; }
         public int TipNUmber { get; set; }
     }
