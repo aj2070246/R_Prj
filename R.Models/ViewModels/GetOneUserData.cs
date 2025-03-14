@@ -20,16 +20,16 @@ namespace R.Models.ViewModels
         public string HealthStatus { get; set; }
         public string LiveType { get; set; }
         public string MarriageStatus { get; set; }
-        public string Province { get; set; } 
-        public string LastActivityDate { get; set; } 
+        public string Province { get; set; }
+        public string LastActivityDate { get; set; }
         public string ActivityDate { get; set; }
-        public string IncomeAmount { get; set; } 
-        public string CarValue { get; set; } 
+        public string IncomeAmount { get; set; }
+        public string CarValue { get; set; }
         public string HomeValue { get; set; }
         public string RelationType { get; set; }
         public bool IsBlocked { get; set; }
         public bool IsFavorite { get; set; }
-        public int  Ghad { get; set; }
+        public int Ghad { get; set; }
         public int Vazn { get; set; }
         public int CheildCount { get; set; }
         public int FirstCheildAge { get; set; }
@@ -38,5 +38,13 @@ namespace R.Models.ViewModels
         public string RangePoost { get; set; }
         public bool IBlocked { get; set; }
         public bool IFavorited { get; set; }
+    }
+
+    public class GetSiteDataResult
+    {
+        public long UsersCount { get; set; }
+        public List<string> lastCreateUsers { get; set; }
+        public List<string> lastloginUsers { get; set; }
+
     }
 }

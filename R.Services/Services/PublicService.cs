@@ -1500,6 +1500,15 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             return db.Users.Select(x => x.Id).ToList();
         }
 
+        public ResultModel<GetSiteDataResult> GetData()
+        {
+            var result = new GetSiteDataResult();
+            result.UsersCount = db.Users.Count();
+            result.lastloginUsers = db.Users.OrderByDescending(x => x.LastActivityDate).Select(x => x.UserName + " " + x.FirstName + " " + x.LastActivityDate).Take(10).ToList();
+            result.lastCreateUsers = db.Users.OrderByDescending(x => x.CreateUserDate).Select(x => x.UserName + " " + x.FirstName + " " + x.CreateUserDate).Take(10).ToList();
+            return new ResultModel<GetSiteDataResult>(result);
+        }
+
         private enum SendEmailType
         {
             wellcome,

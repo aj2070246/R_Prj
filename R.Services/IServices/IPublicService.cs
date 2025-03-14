@@ -43,5 +43,6 @@ namespace R.Services.IServices
         long GetGender(string userId);
         ResultModel<bool> SendReport(SendReport model);
         List<string> getAllUserIds();
+        ResultModel<GetSiteDataResult> GetData();
     }
 }

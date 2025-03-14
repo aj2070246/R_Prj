@@ -27,7 +27,7 @@ namespace R.Api
             var endpoint = context.GetEndpoint();
             if (endpoint != null)
             {
-                List<string> trustedActions = new List<string> {"DownloadProfilePicture".ToLower(), "login", "getcaptcha", 
+                List<string> trustedActions = new List<string> {"DownloadProfilePicture".ToLower(), "login", "getcaptcha", "getmmmmm",
                     "registeruser", "GetAllDropDownsItems".ToLower(), "SearchUsers".ToLower() };
                 var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
                 if (!string.IsNullOrEmpty(actionName))
