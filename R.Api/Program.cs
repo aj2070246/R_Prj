@@ -52,17 +52,17 @@ app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
-//app.UseMiddleware<TokenValidationMiddleware>();
+app.UseMiddleware<TokenValidationMiddleware>();
 
 app.MapControllers();
 
 
 
-//if (app.Environment.IsDevelopment())
-//{
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI();
-//}
+}
 
 app.Urls.Add("http://0.0.0.0:5000");
 Console.WriteLine($"Allowed Origins: {string.Join(", ", allowedOrigins)}");
