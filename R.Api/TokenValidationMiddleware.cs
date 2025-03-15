@@ -30,6 +30,7 @@ namespace R.Api
                 List<string> trustedActions = new List<string> {
                     
                     "downloadProfilePhoto".ToLower(),
+                    "DownloadProfilePicture".ToLower(),
                     "GetUserInfo".ToLower(),
                     "GetAllDropDownsItems".ToLower(),
                     "SearchUsers".ToLower(),
