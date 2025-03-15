@@ -155,22 +155,27 @@ namespace R.Services.Services
                     result.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                     result.RangePoost = GetRangePoost(user.RangePoost);
 
-                    var isBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.StringId && x.BlockedUserId == model.CurrentUserId);
-                    result.IsBlocked = isBlocked;
-                    result.IBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
-                    result.IFavorited = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
-
-                    var isfavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.StringId && x.FavoritedUserId == model.CurrentUserId);
-                    result.IsFavorite = isfavorite;
-
                     if (!string.IsNullOrEmpty(model.CurrentUserId))
                     {
+                        result.IsBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.StringId && x.BlockedUserId == model.CurrentUserId);
+                        result.IBlocked = db.BlockedDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.BlockedUserId == model.StringId);
+                        result.IFavorited = db.FavoriteDataLog.Any(x => x.SourceUserId == model.CurrentUserId && x.FavoritedUserId == model.StringId);
+                        result.IsFavorite = db.FavoriteDataLog.Any(x => x.SourceUserId == model.StringId && x.FavoritedUserId == model.CurrentUserId);
+
                         db.CheckMeActivityLogs.Add(new CheckMeActivityLogs()
                         {
                             RUsersId = model.StringId,
                             UserId_CheckedMe = model.CurrentUserId
                         });
                         db.SaveChanges();
+                    }
+                    else
+                    {
+                        result.IsBlocked =
+                        result.IBlocked =
+                        result.IFavorited =
+                        result.IsFavorite = false;
+
                     }
                     return new ResultModel<GetOneUserData>(result);
                 }
