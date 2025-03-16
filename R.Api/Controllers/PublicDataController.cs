@@ -131,3 +131,33 @@ namespace R.Api.Controllers
     
     }
 }
+
+
+
+
+//0T84f01pN7khzCWVBj
+//sqlcmd -S localhost -U sa -P 'abc.abc'
+
+//select  count(id) from Users where LEN(mobile)<11
+//select   emailaddress, mobile from Users where LEN(mobile)<11
+
+//-----------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------
+
+//--------------unrar - build - new site------------------
+//--------------unrar - build - new site------------------
+//cd / var / www / yarFront
+//unrar x RfrontSpp.rar
+//pm2 stop yarFront
+//pm2 delete yarFront
+//pm2 save
+//npm install
+//npm run build
+//pm2 start npm --name yarFront -- start
+//pm2 ls
+//pm2 save
+//------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
+
+
+
