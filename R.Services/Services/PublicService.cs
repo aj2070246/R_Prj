@@ -120,6 +120,7 @@ namespace R.Services.Services
                             .Include(x => x.LiveType)
                             .Include(x => x.IncomeAmount)
                             .Include(x => x.CarValue)
+                            .Include(x => x.RelationType)
                             .Include(x => x.HomeValue)
                             .Include(x => x.MarriageStatus).FirstOrDefault();
 
