@@ -47,4 +47,10 @@ namespace R.Models.ViewModels
         public List<string> lastloginUsers { get; set; }
 
     }
+    public class UserHeaderData
+    {
+        public int UnreadMessagesCount { get; set; }
+        public bool EmailIsVerified { get; set; }
+    }
+
 }

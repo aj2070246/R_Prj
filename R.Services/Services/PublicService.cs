@@ -1337,12 +1337,13 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
         }
 
-        public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
+        public ResultModel<UserHeaderData> GetCountOfUnreadMessages(BaseInputModel model)
         {
             try
             {
                 string query = $"select count(id) as UnreadMessagesCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
 
+                var EmailIsVerified = (db.Users.Find(model.CurrentUserId).EmailAddressStatusId != 3);
 
                 int UnreadMessagesCount = 0;
                 using var connection = db.Database.GetDbConnection();
@@ -1358,12 +1359,16 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 }
 
                 connection.Close();
-                return new ResultModel<int>(UnreadMessagesCount++);
+                return new ResultModel<UserHeaderData>(new UserHeaderData
+                {
+                    UnreadMessagesCount = UnreadMessagesCount++,
+                    EmailIsVerified = EmailIsVerified
+                });
 
             }
             catch (Exception e)
             {
-                return new ResultModel<int>(false);
+                return new ResultModel<UserHeaderData>(false);
 
             }
         }
@@ -1411,7 +1416,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                             body = $"{receiverName} عزیز {Environment.NewLine}";
                             body += "به همسریار خوش آمدید . " + Environment.NewLine;
                             body += "کلیه سرویس های این وب سایت رایگان میباشد . " + Environment.NewLine;
-                            
+
                         }
                         break;
                     case SendEmailType.newMessage:

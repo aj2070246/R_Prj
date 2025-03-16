@@ -95,7 +95,7 @@ namespace R.Api.Controllers
 
 
         [HttpPost("GetCountOfUnreadMessages")]
-        public ResultModel<int> GetCountOfUnreadMessages(BaseInputModel model)
+        public ResultModel<UserHeaderData> GetCountOfUnreadMessages(BaseInputModel model)
         {
             return _service.GetCountOfUnreadMessages(model);
         }
