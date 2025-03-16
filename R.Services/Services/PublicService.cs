@@ -1405,6 +1405,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                             body = $"{receiverName} عزیز {Environment.NewLine}";
                             body += "به همسریار خوش آمدید . " + Environment.NewLine;
                             body += "کلیه سرویس های این وب سایت رایگان میباشد . " + Environment.NewLine;
+                            
                         }
                         break;
                     case SendEmailType.newMessage:
@@ -1417,9 +1418,9 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
                     case SendEmailType.login:
                         {
-                            subject = ",ورود به سایت";
+                            subject = "ورود به سایت";
                             body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += "کاربری شما به سایت همسریاب لاگین کرده است" + Environment.NewLine;
+                            body += "کاربری شما به سایت همسریابی همسریار وارد شده است" + Environment.NewLine;
                             body += "در صورتی که این دسترسی غیر مجاز است" + Environment.NewLine;
                             body += "سریعا به سایت مراجعه فرموده و کلمه عبور خود را تغییر دهید" + Environment.NewLine;
                             body += "تا از هر گونه سرقت اطلاعات مصون بمانید" + Environment.NewLine;
@@ -1430,7 +1431,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                         break;
                 }
 
-                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} همسریار";
+                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} همسریار{Environment.NewLine}{Environment.NewLine} https://hamsaryar.com";
 
                 var smtp = new SmtpClient
                 {
