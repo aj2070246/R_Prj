@@ -27,15 +27,23 @@ namespace R.Api
             var endpoint = context.GetEndpoint();
             if (endpoint != null)
             {
-                List<string> trustedActions = new List<string> {"DownloadProfilePicture".ToLower(), "login", "getcaptcha", "getmmmmm",
-                    "registeruser", "GetAllDropDownsItems".ToLower(), "SearchUsers".ToLower() };
+                List<string> trustedActions = new List<string> {
+                    
+                    "downloadProfilePhoto".ToLower(),
+                    "DownloadProfilePicture".ToLower(),
+                    "GetUserInfo".ToLower(),
+                    "GetAllDropDownsItems".ToLower(),
+                    "SearchUsers".ToLower(),
+                    "registeruser",
+                    "login", "getcaptcha", "getmmmmm",
+                };
                 var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
                 if (!string.IsNullOrEmpty(actionName))
                     if (!trustedActions.Contains(actionName.ToLower()))
                     {
-                        if (actionName == "DownloadProfilePhoto") 
-                        { 
-                        
+                        if (actionName == "DownloadProfilePhoto")
+                        {
+
                         }
 
                         // بررسی توکن
