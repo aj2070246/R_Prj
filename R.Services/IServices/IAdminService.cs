@@ -22,5 +22,7 @@ namespace R.Services.IServices
         ResultModel<List<GetOneUserChatResult>> GetOneUserChat(GetOneUserChatInputModel model);
         ResultModel<bool> SendUserMessage(SendMessageAdminPanel model);
         ResultModel<bool> SendAdminMessage(SendMessageAdminPanel model);
+        ResultModel<GetUserProfileForUpdateAdmin> GetUserProfile(SelectedItemModel model);
+        ResultModel<bool> UpdateUserInfo(UpdateUserByAdminInputModel model);
     }
 }

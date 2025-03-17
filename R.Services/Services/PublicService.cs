@@ -904,7 +904,6 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 user.LastName = entity.LastName;
                 user.Mobile = entity.Mobile;
                 user.UserName = entity.UserName;
-                user.Password = entity.Password;
                 user.Id = entity.Id;
                 user.CarValue = entity.CarValueId;
                 user.HomeValue = entity.HomeValueId;

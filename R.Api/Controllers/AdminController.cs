@@ -83,5 +83,18 @@ namespace R.Api.Controllers
             var result = _admin.SendAdminMessage(model);
             return result;
         }
+
+        [HttpPost("GetUserProfile")]
+        public ResultModel<GetUserProfileForUpdateAdmin> GetUserProfile(SelectedItemModel model)
+        {
+            return _admin.GetUserProfile(model);
+        }
+
+
+        [HttpPost("UpdateUserInfo")]
+        public ResultModel<bool> UpdateUserInfo(UpdateUserByAdminInputModel model)
+        {
+            return _admin.UpdateUserInfo(model);
+        }
     }
 }

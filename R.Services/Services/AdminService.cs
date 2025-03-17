@@ -633,6 +633,138 @@ namespace R.Services.Services
                 return new ResultModel<bool>(true, true);
             }
         }
+
+        public ResultModel<GetUserProfileForUpdateAdmin> GetUserProfile(SelectedItemModel model)
+        {
+
+
+            try
+            {
+                if (model.StringId == null)
+                    return new ResultModel<GetUserProfileForUpdateAdmin>(false);
+
+                var entity = db.Users.Where(x => x.Id == model.StringId).FirstOrDefault();
+
+
+                if (entity == null)
+                    return new ResultModel<GetUserProfileForUpdateAdmin>(false);
+
+                var user = new GetUserProfileForUpdateAdmin();
+                user.GenderId = entity.GenderId;
+                user.FirstName = entity.FirstName;
+                user.LastName = entity.LastName;
+                user.Mobile = entity.Mobile;
+                user.UserName = entity.UserName;
+                user.Id = entity.Id;
+                user.CarValue = entity.CarValueId;
+                user.HomeValue = entity.HomeValueId;
+                user.HealtStatus = entity.HealthStatusId;
+                user.IncomeAmount = entity.IncomeAmountId;
+                user.LiveType = entity.LiveTypeId;
+                user.RelationType = entity.RelationTypeId;
+                user.MarriageStatus = entity.MarriageStatusId;
+                user.Province = entity.ProvinceId;
+                user.MyDescription = entity.MyDescription;
+                user.EmailAddress = entity.EmailAddress;
+                user.RDescription = entity.RDescription;
+                user.LastActivityDate = Helper.Miladi2ShamsiWithTime(entity.LastActivityDate);
+                user.MemberDate = Helper.Miladi2ShamsiWithTime(entity.CreateUserDate);
+                user.Age = DateTime.Now.Year - entity.BirthDate.Year;
+                user.BirthDateYear = Helper.Miladi2ShamsiYear(entity.BirthDate);
+                user.BirthDateMonth = Helper.Miladi2ShamsiMonth(entity.BirthDate);
+                user.BirthDateDay = Helper.Miladi2ShamsiDay(entity.BirthDate);
+                user.Ghad = entity.Ghad;
+                user.Vazn = entity.Vazn;
+                user.CheildCount = entity.CheildCount;
+                user.FirstCheildAge = entity.FirstCheildAge;
+                user.ZibaeeNumber = entity.ZibaeeNumber;
+                user.TipNumber = entity.TipNUmber;
+                user.RangePoost = entity.RangePoost;
+                user.EmailAddressStatusId = entity.EmailAddressStatusId;
+                user.MobileStatusId = entity.MobileStatusId;
+                user.UserName = entity.UserName;
+                user.Password = entity.Password;
+                user.BirthDate = entity.BirthDate;
+                user.UserStatusId = entity.UserStatus;
+
+
+                return new ResultModel<GetUserProfileForUpdateAdmin>(user);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<GetUserProfileForUpdateAdmin>(false);
+            }
+
+        }
+
+        public ResultModel<bool> UpdateUserInfo(UpdateUserByAdminInputModel model)
+        {
+
+            try
+            {
+
+
+                var user = db.Users.Find(model.UserId);
+                if (user == null)
+                    return new ResultModel<bool>(false, "کاربر یافت نشد");
+
+                if (model.CheildCount == 120)
+                {
+                    //model.FirstCheildAge = "0";
+                    model.CheildCount = 0;
+                }
+                if (model.EmailStatusId == 0)
+                    user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
+                else
+                    user.EmailAddressStatusId=model.EmailStatusId;
+
+                if (model.MobileStatusId == 0)
+                    user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
+                else
+                    user.MobileStatusId = model.MobileStatusId;
+
+                user.FirstName = model.FirstName;
+                user.GenderId = model.Gender;
+                user.LastName = model.LastName;
+                user.UserName = model.UserName;
+                user.RDescription = model.RDescription;
+                user.MyDescription = model.MyDescription;
+                user.ProvinceId = model.Province;
+                user.LiveTypeId = model.LiveType;
+                user.HealthStatusId = model.HealtStatus;
+                user.MarriageStatusId = model.MarriageStatus;
+                user.Mobile = model.Mobile;
+                user.EmailAddress = model.EmailAddress;
+                user.IncomeAmountId = model.IncomeAmount;
+                user.HomeValueId = model.HomeValue;
+                user.CarValueId = model.CarValue;
+                user.RelationTypeId = model.RelationType;
+                user.Ghad = model.Ghad;
+                user.Vazn = model.Vazn;
+                user.RangePoost = model.RangePoost;
+                user.CheildCount = model.CheildCount;
+                user.FirstCheildAge = model.FirstCheildAge.Value;
+                user.ZibaeeNumber = model.ZibaeeNumber;
+                user.TipNUmber = model.TipNUmber;
+                user.UserName = model.UserName;
+                user.Password = model.Password;
+                user.UserStatus= model.UserStatusId;
+
+                db.SaveChanges();
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, "خطا در انجام عملیات" + e.InnerException?.ToString());
+
+            }
+        }
+
+
+
     }
+
 
 }

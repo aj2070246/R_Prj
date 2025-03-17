@@ -33,15 +33,6 @@ namespace R.Api.Controllers
             var result = _service.SearchUsers(model);
             return result;
         }
-         [HttpGet("getmmmmm")]
-        public ResultModel<GetSiteDataResult> getmmmmm()
-        {
-            var result = _service.GetData();
-            return result;
-        }
-
-
-
 
         [HttpPost("GetBlockedUsers")]
         public ResultModel<List<GetOneUserData>> GetBlockedUsers(BasePaginationModel model)
