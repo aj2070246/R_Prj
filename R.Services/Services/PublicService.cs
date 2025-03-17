@@ -24,6 +24,7 @@ namespace R.Services.Services
     {
         private readonly RDbContext db;
         private readonly IConfiguration _configuration;
+        private readonly string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
 
         public PublicService(RDbContext context, IConfiguration configuration)
         {
@@ -106,7 +107,6 @@ namespace R.Services.Services
 
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {
-            string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
             if (model.StringId == adminId || model.CurrentUserId == adminId)
                 return new ResultModel<GetOneUserData>(false);
 
@@ -219,8 +219,6 @@ namespace R.Services.Services
 
                 if (string.IsNullOrEmpty(model.UserName) || string.IsNullOrEmpty(model.Password))
                     return new ResultModel<LoginResultModel>(false, "وارد کردن نام کاربری و کلمه عبور اجباری است");
-
-                var cc = db.Database.GetConnectionString();
 
                 var user = db.Users.Where(x => x.UserName.ToLower() == model.UserName.ToLower() && x.Password == model.Password)
                     .Include(x => x.Gender)
@@ -1113,7 +1111,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
         #region private methods
 
-        private ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
+        public ResultModel<bool> CheckCaptchaCode(string CaptchaId, string CaptchaValue)
         {
 #if DEBUG
             return new ResultModel<bool>(true, true);
@@ -1521,7 +1519,7 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             return new ResultModel<GetSiteDataResult>(result);
         }
 
-        private enum SendEmailType
+        public enum SendEmailType
         {
             wellcome,
             newMessage,

@@ -39,6 +39,20 @@ namespace R.Models.ViewModels
         public bool IBlocked { get; set; }
         public bool IFavorited { get; set; }
     }
+    public class GetOneUserDataForAdmin: GetOneUserData
+    {
+        public string EmailAddress { get; set; }
+        public string MobileNumber { get; set; }
+        public string MobileStatus { get; set; }
+        public string EmailStatus { get; set; }
+        public string MemberDate { get; set; }
+        public DateTime LastActivityDateTime { get; set; }
+        public DateTime BirthDateTime { get; set; }
+        public DateTime MemberDateTime { get; set; }
+        public int MobileStatusId { get; set; }
+        public int EmailStatusId { get; set; }
+        public string LastName { get; set; }
+    }
 
     public class GetSiteDataResult
     {

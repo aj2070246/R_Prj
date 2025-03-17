@@ -60,7 +60,6 @@ namespace R.Api
 
                                 if (user == null)
                                 {
-                                    // اگر توکن نامعتبر است، مدل مورد نظر را برگردانید
                                     context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                                     await context.Response.WriteAsync("Token is invalid");
                                     return; // توقف پردازش درخواست
