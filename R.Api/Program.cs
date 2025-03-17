@@ -53,7 +53,7 @@ app.UseRouting();
 app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
-//app.UseMiddleware<TokenValidationMiddleware>();
+app.UseMiddleware<TokenValidationMiddleware>();
 
 app.MapControllers();
 
