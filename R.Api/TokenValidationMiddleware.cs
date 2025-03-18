@@ -35,7 +35,7 @@ namespace R.Api
                     "GetAllDropDownsItems".ToLower(),
                     "SearchUsers".ToLower(),
                     "registeruser",
-                    "login", "getcaptcha", "getmmmmm",
+                    "login", "getcaptcha", "getmmmmm","adminlogin"
                 };
                 var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
                 if (!string.IsNullOrEmpty(actionName))
