@@ -67,6 +67,12 @@ namespace R.Api.Controllers
         }
         #endregion
 
+        [HttpPost("UpdateEmailAddress")]
+        public ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model)
+        {
+            return _service.UpdateEmailAddress(model);
+        }
+        
         [HttpPost("GetUserInfo")]
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using R.Models.ViewModels.BaseModels;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -39,7 +40,7 @@ namespace R.Models.ViewModels
         public bool IBlocked { get; set; }
         public bool IFavorited { get; set; }
     }
-    public class GetOneUserDataForAdmin: GetOneUserData
+    public class GetOneUserDataForAdmin : GetOneUserData
     {
         public string EmailAddress { get; set; }
         public string MobileNumber { get; set; }
@@ -64,7 +65,14 @@ namespace R.Models.ViewModels
     public class UserHeaderData
     {
         public int UnreadMessagesCount { get; set; }
+        public int UnreadMessagesUsersCount { get; set; }
+        public string EmailAddress { get; set; }
         public bool EmailIsVerified { get; set; }
+    }
+
+    public class EmailUpdateInputModel : BaseInputModel
+    {
+        public string EmailAddress { get; set; }
     }
 
 }

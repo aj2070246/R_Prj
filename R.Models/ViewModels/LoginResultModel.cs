@@ -30,5 +30,6 @@ namespace R.Models.ViewModels
         public string HomeValue { get; set; }
         public string LastActivityDate { get; set; }
         public string? EmailAddress { get; set; }
+        public bool EmailIsVerified { get; set; }
     }
 }

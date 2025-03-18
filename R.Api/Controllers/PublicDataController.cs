@@ -44,8 +44,8 @@ namespace R.Api.Controllers
         public async Task<ResultModel<bool>> SendEmailVerifyCodeForVerify(SendEmailVerifyCodeInputModel model)
         {
             ResultModel<bool> result = await _service.SendEmailVerifyCode(model, false);
-
-            return new ResultModel<bool>(true, true);
+            return result;
+            //return new ResultModel<bool>(true, true);
         } 
         [HttpPost("VerifyEmailCodeForAcceptEmail")]
         public async Task<ResultModel<bool>> VerifyEmailCodeForAcceptEmail(CheckEmailVerifyCodeInputModel model)
@@ -55,9 +55,9 @@ namespace R.Api.Controllers
         }
 
         [HttpPost("RegisterUser")]
-        public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
+        public async Task<ResultModel<bool>> RegisterUser(RegisterUserInputModel model)
         {
-            var result = _service.RegisterUser(model);
+            var result = await _service.RegisterUser(model);
             return result;
         }
 
@@ -136,7 +136,7 @@ namespace R.Api.Controllers
 
 
 //0T84f01pN7khzCWVBj
-//sqlcmd -S localhost -U sa -P 'abc.abc'
+//sqlcmd -S localhost -U sa -P 'abc.1234'
 
 //select  count(id) from Users where LEN(mobile)<11
 //select   emailaddress, mobile from Users where LEN(mobile)<11

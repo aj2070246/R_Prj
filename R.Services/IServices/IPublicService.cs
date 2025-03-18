@@ -17,7 +17,7 @@ namespace R.Services.IServices
         ResultModel<LoginResultModel> login(LoginInputModel model);
         ResultModel<bool> UploadProfilePhoto(ProfilePhotoModel model);
 
-        ResultModel<bool> RegisterUser(RegisterUserInputModel model);
+        Task<ResultModel<bool>> RegisterUser(RegisterUserInputModel model);
         ResultModel<bool> UpdateUserInfo(UpdateUserInputModel model);
         bool SaveCaptcha(SaveCaptchaInputModel saveCaptchaInputModel);
 
@@ -45,5 +45,6 @@ namespace R.Services.IServices
         ResultModel<bool> SendReport(SendReport model);
         List<string> getAllUserIds();
         ResultModel<GetSiteDataResult> GetData();
+        ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model);
     }
 }

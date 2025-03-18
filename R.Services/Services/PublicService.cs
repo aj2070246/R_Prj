@@ -15,6 +15,7 @@ using Microsoft.IdentityModel.Abstractions;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.SqlServer.Server;
+using Microsoft.Extensions.DependencyInjection;
 
 
 
@@ -25,13 +26,13 @@ namespace R.Services.Services
         private readonly RDbContext db;
         private readonly IConfiguration _configuration;
         private readonly string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
-
-        public PublicService(RDbContext context, IConfiguration configuration)
+        private readonly IServiceProvider _serviceProvider;
+        public PublicService(RDbContext context, IConfiguration configuration, IServiceProvider serviceProvider)
         {
-            db = context; // دریافت DbContext از طریق constructor injection
+            db = context;
             _configuration = configuration;
+            _serviceProvider = serviceProvider; // ذخیره برای استفاده بعدی
         }
-
         public AllDropDownItems GetAllDropDownItems()
         {
             try
@@ -262,7 +263,8 @@ namespace R.Services.Services
                     IncomeAmount = user?.IncomeAmount?.ItemValue,
                     CarValue = user?.CarValue?.ItemValue,
                     HomeValue = user?.HomeValue?.ItemValue,
-                    EmailAddress = user.EmailAddress
+                    EmailAddress = user.EmailAddress,
+                    EmailIsVerified = user.EmailAddressStatusId == 3
                 };
 
                 loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
@@ -278,7 +280,7 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<bool> RegisterUser(RegisterUserInputModel model)
+        public async Task<ResultModel<bool>> RegisterUser(RegisterUserInputModel model)
         {
 
             if (string.IsNullOrEmpty(model.UserName))
@@ -364,15 +366,31 @@ namespace R.Services.Services
                 {
                     user.FirstCheildAge = 0; ;
                 }
-                db.Users.Add(user);
-                db.SaveChanges();
-
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var newDb = scope.ServiceProvider.GetRequiredService<RDbContext>();
+                    newDb.Users.Add(user);
+                    newDb.SaveChanges(); // حالا باید کار کنه
+                }
                 SendMessage(new SendMessageInputModel()
                 {
-                    SenderUserId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287",
+                    SenderUserId = adminId,
                     ReceiverUserId = user.Id,
                     MessageText = "به همسریار خوش آمدید" + Environment.NewLine + " با بیان دیدگاه خود ما را در ارائه خدمات بهتر یاری بفرمایید " + Environment.NewLine + "مدیریت همسریار"
                 });
+                var verifyCode = GenerateRandomNumber();
+
+                var emailresult = await SendEmailAsync(user.EmailAddress, verifyCode, false, user.FirstName);
+
+                using (var scope = _serviceProvider.CreateScope())
+                {
+                    var newDb = scope.ServiceProvider.GetRequiredService<RDbContext>();
+                    var entity = newDb.Users.Find(id);
+                    entity.EmailVerifyCode = verifyCode;
+                    entity.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
+                    entity.EmailAddressStatusId = 2;
+                    newDb.SaveChanges(); // حالا باید کار کنه
+                }
 
                 sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.wellcome);
                 return new ResultModel<bool>(true, true);
@@ -490,10 +508,12 @@ namespace R.Services.Services
                     if (user == null)
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
 
-                    if (user.EmailVerifyCodeExpireDate < DateTime.Now || user.EmailVerifyCodeExpireDate == null)
+                    if (user.EmailVerifyCodeExpireDate > DateTime.Now)
                         return new ResultModel<bool>(false, "کد برای شما ارسال شده است و "
                             + Environment.NewLine + "تا پنج دقیقه آینده امکان ارسال وجدد وجود ندارد"
                             + Environment.NewLine + "لطفا پوشه spam در ایمیل خود را چک کنید");
+                    if (string.IsNullOrEmpty(user.EmailAddress))
+                        return new ResultModel<bool>(false, false, "ایمیل شما نامعتبر است - با مراجعه به بخشی ویرایش پروفایل، نسبت به اصلاح آن اقدام نمایید");
 
                     var result = await SendEmailAsync(user.EmailAddress, verifyCode, ForResetPassword, user.FirstName);
                     if (result.IsSuccess)
@@ -502,8 +522,11 @@ namespace R.Services.Services
                         user.EmailVerifyCodeExpireDate = DateTime.Now.AddMinutes(5);
                         user.EmailAddressStatusId = 2;
                         db.SaveChanges();
+                        return result;
+
                     }
-                    return result;
+                    return new ResultModel<bool>(false, false, "خطا در انجام عملیات");
+
                 }
             }
             catch (Exception ex)
@@ -1338,11 +1361,12 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
         {
             try
             {
-                string query = $"select count(id) as UnreadMessagesCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
+                string query = $"select count(id)  as UnreadMessagesCount ,count(distinct( senderUserId)) usersCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
 
-                var EmailIsVerified = (db.Users.Find(model.CurrentUserId).EmailAddressStatusId != 3);
+                var EmailIsVerified = (db.Users.Find(model.CurrentUserId).EmailAddressStatusId == 3);
 
                 int UnreadMessagesCount = 0;
+                int unreadMessagesUsersCount = 0;
                 using var connection = db.Database.GetDbConnection();
                 using var command = connection.CreateCommand();
                 command.CommandText = query;
@@ -1353,13 +1377,23 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 while (reader.Read())
                 {
                     UnreadMessagesCount = reader.GetInt32(reader.GetOrdinal("UnreadMessagesCount"));
+                    unreadMessagesUsersCount = reader.GetInt32(reader.GetOrdinal("usersCount"));
+                }
+                connection.Close();
+                var userEmail = "";
+                if (!EmailIsVerified)
+                {
+                    var user = db.Users.Find(model.CurrentUserId);
+                    userEmail = user.EmailAddress;
                 }
 
-                connection.Close();
+
                 return new ResultModel<UserHeaderData>(new UserHeaderData
                 {
                     UnreadMessagesCount = UnreadMessagesCount++,
-                    EmailIsVerified = EmailIsVerified
+                    EmailIsVerified = EmailIsVerified,
+                    EmailAddress = userEmail,
+                    UnreadMessagesUsersCount = unreadMessagesUsersCount
                 });
 
             }
@@ -1516,6 +1550,28 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             result.lastloginUsers = db.Users.OrderByDescending(x => x.LastActivityDate).Select(x => x.UserName + " " + x.FirstName + " " + x.LastActivityDate).Take(10).ToList();
             result.lastCreateUsers = db.Users.OrderByDescending(x => x.CreateUserDate).Select(x => x.UserName + " " + x.FirstName + " " + x.CreateUserDate).Take(10).ToList();
             return new ResultModel<GetSiteDataResult>(result);
+        }
+
+        public ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model)
+        {
+            try
+            {
+                var isDouplicated = db.Users.Any(x => x.EmailAddress == model.EmailAddress && x.Id != model.CurrentUserId);
+                if (isDouplicated)
+                    return new ResultModel<bool>(false, false, "ایمیل توسط کاربر دیگری مورد استفاده قرار گرفته است");
+
+                var user = db.Users.Find(model.CurrentUserId);
+                user.EmailAddress = model.EmailAddress;
+                user.EmailAddressStatusId = 1;
+                db.SaveChanges();
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false, "خطا در انجام عملیات");
+
+            }
         }
 
         public enum SendEmailType
