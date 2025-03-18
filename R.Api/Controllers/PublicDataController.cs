@@ -159,5 +159,8 @@ namespace R.Api.Controllers
 //------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------
 
+//sudo nano /etc/nginx/sites-available/adminadmin
 
 
+//pm2 start npm --name "admin" -- run start -- -p 7777
+//sudo systemctl restart nginx
