@@ -392,7 +392,8 @@ namespace R.Services.Services
 
         public ResultModel<List<GetAdminAllMessagesResultModel>> GetAdminAllMessages(SelectedItemModel model)
         {
-            model.CurrentUserId = adminId;
+            if (string.IsNullOrEmpty(model.CurrentUserId))
+                model.CurrentUserId = adminId;
             try
             {
                 string query = $"WITH UnreadMessages AS ( " +
@@ -407,8 +408,8 @@ namespace R.Services.Services
             Environment.NewLine + $"         CASE WHEN ReceiverUserId = '{model.CurrentUserId}' THEN SenderUserId ELSE ReceiverUserId END" +
             Environment.NewLine + $" )" +
             Environment.NewLine + $" SELECT DISTINCT UnreadMessages.OtherUserId SenderUserId, ur.id ReceiverUserId, us.genderId genderId," +
-            Environment.NewLine + $"        CONCAT(uS.FirstName, ' ', uS.LastName) AS sender," +
-            Environment.NewLine + $"        CONCAT(uR.FirstName, ' ', uR.LastName) AS receiver," +
+            Environment.NewLine + $"        CASE WHEN LEN(uS.mobile) > 11 THEN uS.FirstName + ' ' + uS.LastName + ' fake' ELSE uS.FirstName + ' ' + uS.LastName     END AS sender, " +
+            Environment.NewLine + $"        CASE WHEN LEN(uR.mobile) > 11 THEN uR.FirstName + ' ' + uR.LastName + ' fake' ELSE uR.FirstName + ' ' + uR.LastName     END AS receiver, " +
             Environment.NewLine + $"        UnreadMessages.UnreadMessagesCount AS umc," +
             Environment.NewLine + $"        UnreadMessages.LastReceivedMessageDate," +
             Environment.NewLine + $"        UnreadMessages.MessageId AS Id" + // اضافه کردن MessageId به خروجی
@@ -459,51 +460,51 @@ namespace R.Services.Services
             try
             {
                 string query = "WITH UniqueSenders AS ("
-+Environment.NewLine + "    SELECT DISTINCT SenderUserId                     "
-+Environment.NewLine+ "    FROM dbo.UsersMessages                           "
-+Environment.NewLine+ "),                                                   "
-+Environment.NewLine+ "ChatSummary AS (                                     "
-+Environment.NewLine+ "    SELECT                                           "
-+Environment.NewLine+ "        um.SenderUserId,                             "
-+Environment.NewLine+ "        um.ReceiverUserId,                           "
-+Environment.NewLine+ "        COUNT(*) AS TotalMessages,                   "
-+Environment.NewLine+ "        SUM(CASE WHEN um.MessageStatusId = 1 THEN 1 ELSE 0 END) AS UnreadMessages,"
-+Environment.NewLine+ "        MAX(um.SendDate) AS LatestSendDate                                        "
-+Environment.NewLine+ "    FROM                                                                          "
-+Environment.NewLine+ "        dbo.UsersMessages um                                                      "
-+Environment.NewLine+ "    GROUP BY                                                                      "
-+Environment.NewLine+ "        um.SenderUserId,                                                          "
-+Environment.NewLine+ "        um.ReceiverUserId                                                         "
-+Environment.NewLine+ ")                                                                                 "
-+Environment.NewLine+ "SELECT                                                                            "
-+Environment.NewLine+ "    um.Id,                                                                        "
-+Environment.NewLine+ "    um.SenderUserId,                                                              "
-+Environment.NewLine+ "    um.ReceiverUserId,                                                            "
-+Environment.NewLine+ "    um.MessageText,                                                               "
-+Environment.NewLine+ "    um.SendDate,                                                                  "
-+Environment.NewLine+ "    um.MessageStatusId,                                                           "
-+Environment.NewLine+ "    CASE WHEN LEN(sender.mobile) > 11 THEN sender.FirstName + ' ' + sender.LastName + ' fake' ELSE sender.FirstName + ' ' + sender.LastName     END AS SenderName, "
-+ Environment.NewLine+ "   CASE WHEN LEN(receiver.mobile) > 11 THEN receiver.FirstName + ' ' + receiver.LastName + ' fake' ELSE receiver.FirstName + ' ' + receiver.LastName    END AS ReceiverName, "
-+ Environment.NewLine+ "    cs.TotalMessages,                                                             "
-+Environment.NewLine+ "    cs.UnreadMessages                                                             "
-+Environment.NewLine+ "FROM                                                                              "
-+Environment.NewLine+ "    UniqueSenders us                                                              "
-+Environment.NewLine+ "INNER JOIN                                                                        "
-+Environment.NewLine+ "    ChatSummary cs                                                                "
-+Environment.NewLine+ "    ON us.SenderUserId = cs.SenderUserId                                          "
-+Environment.NewLine+ "INNER JOIN                                                                        "
-+Environment.NewLine+ "    dbo.UsersMessages um                                                          "
-+Environment.NewLine+ "    ON cs.SenderUserId = um.SenderUserId                                          "
-+Environment.NewLine+ "    AND cs.ReceiverUserId = um.ReceiverUserId                                     "
-+Environment.NewLine+ "    AND cs.LatestSendDate = um.SendDate                                           "
-+Environment.NewLine+ "INNER JOIN                                                                        "
-+Environment.NewLine+ "    dbo.Users sender                                                              "
-+Environment.NewLine+ "    ON cs.SenderUserId = sender.Id                                                "
-+Environment.NewLine+ "INNER JOIN                                                                        "
-+Environment.NewLine+ "    dbo.Users receiver                                                            "
-+Environment.NewLine+ "    ON cs.ReceiverUserId = receiver.Id                                            "
-+Environment.NewLine+ "ORDER BY "
-+Environment.NewLine+ "    um.SendDate DESC";
++ Environment.NewLine + "    SELECT DISTINCT SenderUserId                     "
++ Environment.NewLine + "    FROM dbo.UsersMessages                           "
++ Environment.NewLine + "),                                                   "
++ Environment.NewLine + "ChatSummary AS (                                     "
++ Environment.NewLine + "    SELECT                                           "
++ Environment.NewLine + "        um.SenderUserId,                             "
++ Environment.NewLine + "        um.ReceiverUserId,                           "
++ Environment.NewLine + "        COUNT(*) AS TotalMessages,                   "
++ Environment.NewLine + "        SUM(CASE WHEN um.MessageStatusId = 1 THEN 1 ELSE 0 END) AS UnreadMessages,"
++ Environment.NewLine + "        MAX(um.SendDate) AS LatestSendDate                                        "
++ Environment.NewLine + "    FROM                                                                          "
++ Environment.NewLine + "        dbo.UsersMessages um                                                      "
++ Environment.NewLine + "    GROUP BY                                                                      "
++ Environment.NewLine + "        um.SenderUserId,                                                          "
++ Environment.NewLine + "        um.ReceiverUserId                                                         "
++ Environment.NewLine + ")                                                                                 "
++ Environment.NewLine + "SELECT                                                                            "
++ Environment.NewLine + "    um.Id,                                                                        "
++ Environment.NewLine + "    um.SenderUserId,                                                              "
++ Environment.NewLine + "    um.ReceiverUserId,                                                            "
++ Environment.NewLine + "    um.MessageText,                                                               "
++ Environment.NewLine + "    um.SendDate,                                                                  "
++ Environment.NewLine + "    um.MessageStatusId,                                                           "
++ Environment.NewLine + "    CASE WHEN LEN(sender.mobile) > 11 THEN sender.FirstName + ' ' + sender.LastName + ' fakeUser ' ELSE sender.FirstName + ' ' + sender.LastName     END AS SenderName, "
++ Environment.NewLine + "   CASE WHEN LEN(receiver.mobile) > 11 THEN receiver.FirstName + ' ' + receiver.LastName + ' fakeUser ' ELSE receiver.FirstName + ' ' + receiver.LastName    END AS ReceiverName, "
++ Environment.NewLine + "    cs.TotalMessages,                                                             "
++ Environment.NewLine + "    cs.UnreadMessages                                                             "
++ Environment.NewLine + "FROM                                                                              "
++ Environment.NewLine + "    UniqueSenders us                                                              "
++ Environment.NewLine + "INNER JOIN                                                                        "
++ Environment.NewLine + "    ChatSummary cs                                                                "
++ Environment.NewLine + "    ON us.SenderUserId = cs.SenderUserId                                          "
++ Environment.NewLine + "INNER JOIN                                                                        "
++ Environment.NewLine + "    dbo.UsersMessages um                                                          "
++ Environment.NewLine + "    ON cs.SenderUserId = um.SenderUserId                                          "
++ Environment.NewLine + "    AND cs.ReceiverUserId = um.ReceiverUserId                                     "
++ Environment.NewLine + "    AND cs.LatestSendDate = um.SendDate                                           "
++ Environment.NewLine + "INNER JOIN                                                                        "
++ Environment.NewLine + "    dbo.Users sender                                                              "
++ Environment.NewLine + "    ON cs.SenderUserId = sender.Id                                                "
++ Environment.NewLine + "INNER JOIN                                                                        "
++ Environment.NewLine + "    dbo.Users receiver                                                            "
++ Environment.NewLine + "    ON cs.ReceiverUserId = receiver.Id                                            "
++ Environment.NewLine + "ORDER BY "
++ Environment.NewLine + "    um.SendDate DESC";
 
 
 
@@ -726,7 +727,7 @@ namespace R.Services.Services
                 if (model.EmailStatusId == 0)
                     user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
                 else
-                    user.EmailAddressStatusId=model.EmailStatusId;
+                    user.EmailAddressStatusId = model.EmailStatusId;
 
                 if (model.MobileStatusId == 0)
                     user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
@@ -758,7 +759,7 @@ namespace R.Services.Services
                 user.TipNUmber = model.TipNUmber;
                 user.UserName = model.UserName;
                 user.Password = model.Password;
-                user.UserStatus= model.UserStatusId;
+                user.UserStatus = model.UserStatusId;
 
                 db.SaveChanges();
                 return new ResultModel<bool>(true, true);
