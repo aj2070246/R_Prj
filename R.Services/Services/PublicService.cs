@@ -439,7 +439,7 @@ namespace R.Services.Services
 
                 if (model.CheildCount == 120)
                 {
-                    model.FirstCheildAge = "0";
+                    model.FirstCheildAge = 0;
                     model.CheildCount = 0;
                 }
                 user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
@@ -464,7 +464,7 @@ namespace R.Services.Services
                 user.Vazn = model.Vazn;
                 user.RangePoost = model.RangePoost;
                 user.CheildCount = model.CheildCount;
-                user.FirstCheildAge = string.IsNullOrEmpty(model.FirstCheildAge) ? 0 : Convert.ToInt32(model.FirstCheildAge);
+                user.FirstCheildAge = model.FirstCheildAge.Value;
                 user.ZibaeeNumber = model.ZibaeeNumber;
                 user.TipNUmber = model.TipNUmber;
 
@@ -953,6 +953,8 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 user.TipNumber = entity.TipNUmber;
                 user.RangePoost = entity.RangePoost;
                 user.EmailAddressStatusId = entity.EmailAddressStatusId;
+                if (entity.CheildCount == 0)
+                    user.CheildCount = 120;
                 return new ResultModel<GetMyProfileInfoResultModel>(user);
 
             }
