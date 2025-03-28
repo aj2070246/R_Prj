@@ -43,8 +43,13 @@ namespace R.Services.IServices
         ResultModel<UserHeaderData> GetCountOfUnreadMessages(BaseInputModel model);
         long GetGender(string userId);
         ResultModel<bool> SendReport(SendReport model);
-        List<string> getAllUserIds();
-        ResultModel<GetSiteDataResult> GetData();
+        ResultModel<string> GetConfig(string KeyName);
+
         ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model);
+        Task<ResultModel<bool>> CheckMobileVerifyCode(CheckMobileVerifyCodeInputModel model);
+        ResultModel<string> GetMobileVerifyCode(BaseInputModel model);
+        ResultModel<bool> UpdateUserMobileInVerify(MobileNumberUpdateInputModel model);
+        ResultModel<CheckMobileNumberForResetPasswordResult> CheckMobileNumberForResetPassword(CheckMobileNumberForResetPasswordInputModel model);
+        Task<ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>> GetNewPassword_Forgate(CheckMobileVerifyCodeForgetPasswordInputModel model);
     }
 }

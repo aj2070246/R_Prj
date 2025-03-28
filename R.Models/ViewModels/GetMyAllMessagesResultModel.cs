@@ -50,6 +50,7 @@ namespace R.Models.ViewModels
         public string MessageText { get; set; }
         public string? SenderUserId { get; set; }
         public string? ReceiverUserId { get; set; }
-        
+        public int? EmailStatus { get; set; }
+
     }
 }

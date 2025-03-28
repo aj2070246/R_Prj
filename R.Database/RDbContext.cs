@@ -27,6 +27,8 @@ namespace R.Database
         public DbSet<FavoriteDataLog> FavoriteDataLog { get; set; }
         public DbSet<BlockedDataLog> BlockedDataLog { get; set; }
         public DbSet<CheckMeActivityLogs> CheckMeActivityLogs { get; set; }
+        public DbSet<AppConfigs> AppConfigs { get; set; }
+
 
     }
 }

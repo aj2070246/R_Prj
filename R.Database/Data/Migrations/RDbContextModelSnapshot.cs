@@ -3,20 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using R.Database;
 
 #nullable disable
 
-namespace R.Database.Migrations
+namespace R.Database.Data.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    [Migration("20250314165614_test")]
-    partial class test
+    partial class RDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -40,6 +37,30 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Age");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.AppConfigs", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyDescription")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("KeyValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppConfigs");
                 });
 
             modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>
@@ -355,6 +376,9 @@ namespace R.Database.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("PhoneVerifyWay")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("ProfilePicture")
                         .HasColumnType("varbinary(max)");
 
@@ -370,6 +394,12 @@ namespace R.Database.Migrations
 
                     b.Property<long?>("RelationTypeId")
                         .HasColumnType("bigint");
+
+                    b.Property<long?>("TelegramChatId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TelegramUserName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TipNUmber")
                         .HasColumnType("int");

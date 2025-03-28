@@ -60,6 +60,10 @@ namespace R.Database.Entities
         public DateTime? MobileVerifyCodeExpireDate { get; set; }
         public int MobileStatusId { get; set; } // 1 = reg and not verift , 2 = send code , 3 = verified , 
 
+        public long? TelegramChatId { get; set; }
+        public string? TelegramUserName { get; set; }
+        public int? PhoneVerifyWay { get; set; }//telegram - whatsapp
+
 
         public string? EmailAddress { get; set; } // 1 = reg and not verift , 2 = send code , 3 = verified , 
         public int EmailAddressStatusId { get; set; } // 1 = reg and not verift , 2 = send code , 3 = verified , 
@@ -67,6 +71,8 @@ namespace R.Database.Entities
         public DateTime? EmailVerifyCodeExpireDate { get; set; }
 
         public byte[]? ProfilePicture { get; set; } // ذخیره عکس به صورت باینری
+
+
 
     }
 }

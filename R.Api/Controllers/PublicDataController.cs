@@ -8,6 +8,9 @@ using SixLabors.ImageSharp.Drawing.Processing;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.Fonts;
 using SixLabors.ImageSharp.PixelFormats;
+using R.Models.ViewModels.BaseModels;
+using Telegram.Bot;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace R.Api.Controllers
 {
@@ -16,13 +19,13 @@ namespace R.Api.Controllers
     public class PublicDataController : ControllerBase
     {
         private readonly IPublicService _service;
-        private readonly ILogger<WeatherForecastController> _logger;
+        private readonly TelegramBotService _botService;
 
-        public PublicDataController(IPublicService service, ILogger<WeatherForecastController> logger)
+
+        public PublicDataController(IPublicService service,  TelegramBotService _t)
         {
+            _botService = _t;
             _service = service;
-            _logger = logger;
-
         }
 
         [HttpGet("GetAllDropDownsItems")]
@@ -46,7 +49,7 @@ namespace R.Api.Controllers
             ResultModel<bool> result = await _service.SendEmailVerifyCode(model, false);
             return result;
             //return new ResultModel<bool>(true, true);
-        } 
+        }
         [HttpPost("VerifyEmailCodeForAcceptEmail")]
         public async Task<ResultModel<bool>> VerifyEmailCodeForAcceptEmail(CheckEmailVerifyCodeInputModel model)
         {
@@ -62,13 +65,38 @@ namespace R.Api.Controllers
         }
 
 
+        [HttpPost("CheckMobileNumberForResetPassword")]
+        public ResultModel<CheckMobileNumberForResetPasswordResult> CheckMobileNumberForResetPassword(CheckMobileNumberForResetPasswordInputModel model)
+        {
+
+            var result = _service.CheckMobileNumberForResetPassword(model);
+            return result;
+        }
+
+
+        [HttpPost("GetNewPassword_Forgate")]
+        public Task<ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>> GetNewPassword_Forgate(CheckMobileVerifyCodeForgetPasswordInputModel model)
+        {
+
+            var result = _service.GetNewPassword_Forgate(model);
+            return result;
+        }
+
+        [HttpPost("GetMobileVerifyCode")]
+        public ResultModel<string> GetMobileVerifyCode(BaseInputModel model)
+        {
+            var result = _service.GetMobileVerifyCode(model);
+            return result;
+        }
+
+
         [HttpPost("login")]
         public ResultModel<LoginResultModel> login(LoginInputModel model)
         {
             var result = _service.login(model);
             return result;
         }
-
+        
         [HttpGet("GetCaptcha")]
         public IActionResult GetCaptcha()
         {
@@ -128,12 +156,12 @@ namespace R.Api.Controllers
                 }
             }
         }
-    
+
     }
 }
 
 
-
+//dotnet publish --configuration Release --runtime linux-x64 --self-contained=false -o ./publish
 
 //0T84f01pN7khzCWVBj
 //sqlcmd -S localhost -U sa -P 'abc.1234'
@@ -154,6 +182,7 @@ namespace R.Api.Controllers
 //npm install
 //npm run build
 //pm2 start npm --name yarFront -- start
+//pm2 start npm --name admin -- start
 //pm2 ls
 //pm2 save
 //------------------------------------------------------------------------------------------
@@ -164,3 +193,4 @@ namespace R.Api.Controllers
 
 //pm2 start npm --name "admin" -- run start -- -p 7777
 //sudo systemctl restart nginx
+//sudo systemctl restart yarApi

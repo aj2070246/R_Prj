@@ -28,13 +28,13 @@ namespace R.Services.Services
     {
         private readonly RDbContext db;
         private readonly IConfiguration _configuration;
-        private readonly string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
 
         public AdminService(RDbContext context, IConfiguration configuration)
         {
             db = context; // دریافت DbContext از طریق constructor injection
             _configuration = configuration;
         }
+        private readonly string adminId = "431C6083-C662-46F6-84B0-348075ABF34FE1BD03DA-FC53-4F74-8CFB-75E4D88C89AE0AADB564-B794-4CFF-A26F-28F695D31850BDEB3154-F9CF-4893-ABBD-DDF5177288434122E12B-4D96-4651-99E4-7E2D444B5287";
 
         public ResultModel<AdminLoginResultModel> AdminLogin(LoginInputModel model)
         {
@@ -82,8 +82,7 @@ namespace R.Services.Services
                     Token = token,
                 };
 
-
-                sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.login);
+                Helper.SendAppLoginEmail(user.EmailAddress, user.FirstName, user.TelegramChatId);
                 return new ResultModel<AdminLoginResultModel>(loginResultModel);
 
             }
@@ -218,7 +217,9 @@ namespace R.Services.Services
                         EmailStatusId = user.EmailAddressStatusId,
                         MobileStatusId = user.MobileStatusId,
                         MobileNumber = user.Mobile,
-                        EmailAddress = user.EmailAddress
+                        EmailAddress = user.EmailAddress,
+                        UserName = user.UserName,
+                        Password = user.Password
                     };
                     result.MobileStatus = GetStatusVerify(result.MobileStatusId);
                     result.EmailStatus = GetStatusVerify(result.EmailStatusId);
@@ -306,89 +307,6 @@ namespace R.Services.Services
             }
         }
 
-        private async Task<ResultModel<bool>> sendAppEmails(string receiverEmail, string receiverName, SendEmailType msgType, string postfixBody = "")
-        {
-
-
-            try
-            {
-                var SenderEmail = _configuration["SenderEmailInfo:SenderEmail"];
-                string SenderEmailAppPassword = _configuration["SenderEmailInfo:SenderEmailAppPassword"];
-                var SenderEmailFullName = _configuration["SenderEmailInfo:SenderEmailFullName"];
-                var SiteName = _configuration["SenderEmailInfo:SiteName"];
-
-                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
-                var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
-                var toAddress = new MailAddress(receiverEmail, receiverName);
-                string subject = "";
-                string body = "";
-                switch (msgType)
-                {
-                    case SendEmailType.wellcome:
-                        {
-                            subject = "خوش آمدید";
-                            body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += "به همسریار خوش آمدید . " + Environment.NewLine;
-                            body += "کلیه سرویس های این وب سایت رایگان میباشد . " + Environment.NewLine;
-
-                        }
-                        break;
-                    case SendEmailType.newMessage:
-                        {
-                            subject = "پیام جدید";
-                            body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += postfixBody;
-                        }
-                        break;
-
-                    case SendEmailType.login:
-                        {
-                            subject = "ادمین وارد شد";
-                            body = "ادمین وارد شد";
-                            body += Environment.NewLine + Helper.Miladi2ShamsiWithTime(DateTime.Now);
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
-
-                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} همسریار{Environment.NewLine}{Environment.NewLine} https://hamsaryar.com";
-
-                var smtp = new SmtpClient
-                {
-                    Host = "smtp.gmail.com",
-                    Port = 587,
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, SenderEmailAppPassword),
-                    Timeout = 20000
-                };
-
-                using (var message = new MailMessage(fromAddress, toAddress)
-                {
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = false
-
-                })
-                {
-                    message.Bcc.Add(fromAddress);
-                    await smtp.SendMailAsync(message);
-                    Console.WriteLine("Email sent successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return new ResultModel<bool>(false, ex.Message);
-            }
-
-
-            return new ResultModel<bool>(true, true);
-
-        }
 
         public ResultModel<List<GetAdminAllMessagesResultModel>> GetAdminAllMessages(SelectedItemModel model)
         {
@@ -529,7 +447,8 @@ namespace R.Services.Services
                     msg.TotalMessages = Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("TotalMessages")));
                     msg.MessageStatusId = Convert.ToInt32(reader.GetInt32(reader.GetOrdinal("TotalMessages")));
 
-                    msg.LastReceivedMessageDate = Helper.Miladi2ShamsiWithTime(reader.GetDateTime(reader.GetOrdinal("SendDate")));
+                    msg.SendDate = reader.GetDateTime(reader.GetOrdinal("SendDate"));
+                    msg.LastReceivedMessageDate = Helper.Miladi2ShamsiWithTime(msg.SendDate);
 
                     msgs.Add(msg);
                 }
@@ -583,8 +502,7 @@ namespace R.Services.Services
                 item.SendDateTime = Helper.Miladi2ShamsiWithTime(item.SendDate);
 
             }
-
-            return new ResultModel<List<GetOneUserChatResult>>(result);
+            return new ResultModel<List<GetOneUserChatResult>>(result.OrderBy(x => x.SendDate).ToList());
         }
 
         public ResultModel<bool> SendUserMessage(SendMessageAdminPanel model)
@@ -611,7 +529,19 @@ namespace R.Services.Services
                 connection.Open();
                 command.ExecuteReader();
                 connection.Close();
-
+                var sender = db.Users.Find(model.SenderUserId);
+                var receiver = db.Users.Find(model.ReceiverUserId);
+                var message = "";
+                if (model.EmailStatus == 1)
+                {
+                    message = string.Empty;
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender.FirstName, message,receiver.TelegramChatId);
+                }
+                else if (model.EmailStatus == 2)
+                {
+                    message = model.MessageText;
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender.FirstName, message, receiver.TelegramChatId);
+                }
                 return new ResultModel<bool>(true, true);
 
             }
@@ -635,6 +565,22 @@ namespace R.Services.Services
                     SendDate = DateTime.Now
                 });
                 db.SaveChanges();
+                var sender = db.Users.Find(adminId);
+                var receiver = db.Users.Find(model.ReceiverUserId);
+                var message = "";
+                if (model.EmailStatus == 1)
+                {
+                    message = string.Empty;
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender?.FirstName, message,receiver.TelegramChatId);
+                }
+                else if (model.EmailStatus == 2)
+                {
+                    message = model.MessageText;
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender?.FirstName, message, receiver.TelegramChatId);
+
+                }
+
+
                 return new ResultModel<bool>(true, true);
 
             }
@@ -685,8 +631,8 @@ namespace R.Services.Services
                 user.BirthDateDay = Helper.Miladi2ShamsiDay(entity.BirthDate);
                 user.Ghad = entity.Ghad;
                 user.Vazn = entity.Vazn;
-                user.CheildCount = entity.CheildCount;
-                user.FirstCheildAge = entity.FirstCheildAge;
+                user.CheildCount = entity.CheildCount == 0 ? 120 : entity.CheildCount;
+                user.FirstCheildAge = entity.CheildCount == 0 ? 0 : entity.FirstCheildAge;
                 user.ZibaeeNumber = entity.ZibaeeNumber;
                 user.TipNumber = entity.TipNUmber;
                 user.RangePoost = entity.RangePoost;
@@ -721,19 +667,10 @@ namespace R.Services.Services
 
                 if (model.CheildCount == 120)
                 {
-                    //model.FirstCheildAge = "0";
                     model.CheildCount = 0;
                 }
-                if (model.EmailStatusId == 0)
-                    user.EmailAddressStatusId = model.EmailAddress == user.EmailAddress ? user.EmailAddressStatusId : 1;
-                else
-                    user.EmailAddressStatusId = model.EmailStatusId;
-
-                if (model.MobileStatusId == 0)
-                    user.MobileStatusId = model.Mobile == user.Mobile ? user.MobileStatusId : 1;
-                else
-                    user.MobileStatusId = model.MobileStatusId;
-
+                user.EmailAddressStatusId = model.EmailStatusId;
+                user.MobileStatusId = model.MobileStatusId;
                 user.FirstName = model.FirstName;
                 user.GenderId = model.Gender;
                 user.LastName = model.LastName;
@@ -772,8 +709,74 @@ namespace R.Services.Services
             }
         }
 
+        public ResultModel<string> SaveUserChatId(long userId, string phoneElement)
+        {
+            try
+            {
+                string phoneNumber = "0" + phoneElement.Substring(3);
+                var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
+                if (user == null)
+                {
+                    var message = $"شماره {phoneElement} یافت نشد. لطفا با شماره موبایلی که در سایت ثبت نام کرده اید، وارد ربات شوید";
+                    return new ResultModel<string>(false, message);
+                }
 
+                if (user.MobileStatusId == 3)
+                    return new ResultModel<string>(false, "شماره شما قبلا احراز شده است");
 
+                user.TelegramChatId = userId;
+                db.SaveChanges();
+                return new ResultModel<string>(true);
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>(false);
+            }
+        }
+
+        public ResultModel<string> GetMobileOtp(string userPhone)
+        {
+            try
+            {
+                string phoneNumber = "0" + userPhone.Substring(3);
+
+                var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
+                if (user == null)
+                {
+                    return new ResultModel<string>(false, "شماره شما یافت نشد . خطای غیر منتظره");
+                }
+                if (user.MobileVerifyCodeExpireDate < DateTime.Now)
+                {
+                    return new ResultModel<string>(false, "کد اعتبار سنجی منقضی شده است . با ورود به سایت کد اعتبار سنجی جدید درخواست نمایید");
+                }
+                return new ResultModel<string>(user.MobileVerifyCode);
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>(false);
+            }
+        }
+
+        public ResultModel<string> SetUserMobileIsVerify(string userPhone)
+        {
+            try
+            {
+                string phoneNumber = "0" + userPhone.Substring(3);
+                var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
+                if (user == null)
+                    return new ResultModel<string>(false, "شماره شما یافت نشد");
+
+                user.MobileStatusId = 3;
+                db.SaveChanges();
+                return new ResultModel<string>(userPhone, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>(false, "خطای پیشبینی نشده");
+
+            }
+        }
     }
 
 

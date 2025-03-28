@@ -53,6 +53,8 @@ namespace R.Models.ViewModels
         public int MobileStatusId { get; set; }
         public int EmailStatusId { get; set; }
         public string LastName { get; set; }
+        public string UserName { get; set; }
+        public string Password { get; set; }
     }
 
     public class GetSiteDataResult
@@ -66,13 +68,25 @@ namespace R.Models.ViewModels
     {
         public int UnreadMessagesCount { get; set; }
         public int UnreadMessagesUsersCount { get; set; }
-        public string EmailAddress { get; set; }
+        public string MobileNumber { get; set; }
+        public bool MobileIsVerified { get; set; }
+        public string VerifyMobileInboxNumber { get; set; }
         public bool EmailIsVerified { get; set; }
+        public string? EmailAddress { get; set; }
     }
 
     public class EmailUpdateInputModel : BaseInputModel
     {
         public string EmailAddress { get; set; }
+    }
+    public class MobileNumberUpdateInputModel : BaseInputModel
+    {
+        public string MobileNumber { get; set; }
+    }
+    public class CheckMobileVerifyCodeInputModel : BaseInputModel
+    {
+        public string CaptchaValue { get; set; }
+        public string CaptchaId { get; set; }
     }
 
 }

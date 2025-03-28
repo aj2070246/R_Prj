@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.DataProtection.Repositories;
 using R.Services.IServices;
 using R.Services.Services;
 using R.Api;
+using R.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,11 +35,15 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IPublicService, PublicService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddSingleton<TelegramBotService>();
+
+ 
 
 
 
@@ -47,13 +52,18 @@ builder.Services.AddDbContext<RDbContext>(options =>
 
         );
 var app = builder.Build();
+Helper.Configure(app.Services.GetRequiredService<IServiceScopeFactory>());
 
 app.UseRouting();
 
 app.UseCors("AllowSpecificOrigin");
 
 app.UseAuthorization();
-//app.UseMiddleware<TokenValidationMiddleware>();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<TokenValidationMiddleware>();
+}
 
 app.MapControllers();
 

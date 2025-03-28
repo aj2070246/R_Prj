@@ -1,4 +1,8 @@
-﻿using System.Data;
+﻿using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+using System.Data;
 using System.Net.Mail;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +20,10 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.Extensions.Configuration;
 using Microsoft.SqlServer.Server;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
+using static System.Net.WebRequestMethods;
+using System.Linq;
+using Telegram.Bot.Types;
 
 
 
@@ -33,6 +41,11 @@ namespace R.Services.Services
             _configuration = configuration;
             _serviceProvider = serviceProvider; // ذخیره برای استفاده بعدی
         }
+
+        public PublicService()
+        {
+        }
+
         public AllDropDownItems GetAllDropDownItems()
         {
             try
@@ -263,14 +276,19 @@ namespace R.Services.Services
                     IncomeAmount = user?.IncomeAmount?.ItemValue,
                     CarValue = user?.CarValue?.ItemValue,
                     HomeValue = user?.HomeValue?.ItemValue,
+                    MobileNumber = user.Mobile,
+                    EmailIsVerified = user.EmailAddressStatusId == 3,
                     EmailAddress = user.EmailAddress,
-                    EmailIsVerified = user.EmailAddressStatusId == 3
+                    MobileIsVerified = user.MobileStatusId == 3
                 };
 
                 loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                 loginResultModel.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
+                Helper.SendAppLoginEmail(user.EmailAddress, user.FirstName, user.TelegramChatId);
 
-                sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.login);
+                var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == "SmsInboxNumber".ToLower());
+                loginResultModel.VerifyMobileInboxNumber = config.KeyValue;
+
                 return new ResultModel<LoginResultModel>(loginResultModel);
 
             }
@@ -353,7 +371,6 @@ namespace R.Services.Services
                     Vazn = model.Vazn,
                     RangePoost = model.RangePoost,
                     CheildCount = model.CheildCount,
-                    //FirstCheildAge = model.FirstCheildAge,
                     ZibaeeNumber = model.ZibaeeNumber,
                     TipNUmber = model.TipNUmber,
                     LastActivityDate = DateTime.Now,
@@ -380,8 +397,6 @@ namespace R.Services.Services
                 });
                 var verifyCode = GenerateRandomNumber();
 
-                var emailresult = await SendEmailAsync(user.EmailAddress, verifyCode, false, user.FirstName);
-
                 using (var scope = _serviceProvider.CreateScope())
                 {
                     var newDb = scope.ServiceProvider.GetRequiredService<RDbContext>();
@@ -392,7 +407,8 @@ namespace R.Services.Services
                     newDb.SaveChanges(); // حالا باید کار کنه
                 }
 
-                sendAppEmails(user.EmailAddress, user.FirstName, SendEmailType.wellcome);
+                Helper.SendAppRegisterEmail(user.EmailAddress, user.FirstName, user.TelegramChatId);
+
                 return new ResultModel<bool>(true, true);
 
             }
@@ -494,7 +510,8 @@ namespace R.Services.Services
                     if (user == null)
                         return new ResultModel<bool>(false, false, "کاربری یافت نشد . لطفا از صحت ایمیل وارد شده اطمینان حاصل نمایید");
 
-                    var result = await SendEmailAsync(user.EmailAddress, verifyCode, ForResetPassword, user.FirstName);
+                    var result = await Helper.SendEmailVerifyCode(user.EmailAddress, verifyCode, user.TelegramChatId);
+
                     if (result.IsSuccess)
                     {
                         user.Password = verifyCode;
@@ -504,6 +521,7 @@ namespace R.Services.Services
                 }
                 else // for verify Email
                 {
+
                     var user = db.Users.FirstOrDefault(x => x.Id == model.CurrentUserId);
                     if (user == null)
                         return new ResultModel<bool>(false, "کاربر یافت نشد");
@@ -512,10 +530,12 @@ namespace R.Services.Services
                         return new ResultModel<bool>(false, "کد برای شما ارسال شده است و "
                             + Environment.NewLine + "تا پنج دقیقه آینده امکان ارسال وجدد وجود ندارد"
                             + Environment.NewLine + "لطفا پوشه spam در ایمیل خود را چک کنید");
+
                     if (string.IsNullOrEmpty(user.EmailAddress))
                         return new ResultModel<bool>(false, false, "ایمیل شما نامعتبر است - با مراجعه به بخشی ویرایش پروفایل، نسبت به اصلاح آن اقدام نمایید");
 
-                    var result = await SendEmailAsync(user.EmailAddress, verifyCode, ForResetPassword, user.FirstName);
+                    var result = await Helper.SendEmailVerifyCode(user.EmailAddress, verifyCode, 0);
+
                     if (result.IsSuccess)
                     {
                         user.EmailVerifyCode = verifyCode;
@@ -667,10 +687,10 @@ namespace R.Services.Services
                 var receiver = db.Users.FirstOrDefault(x => x.Id == model.ReceiverUserId);
                 if (receiver != null)
                 {
-                    if (receiver.EmailAddressStatusId == 3 && !string.IsNullOrEmpty(receiver.EmailAddress))
+                    if (!string.IsNullOrEmpty(receiver.EmailAddress))
                     {
                         var sender = db.Users.FirstOrDefault(x => x.Id == model.SenderUserId);
-                        sendAppEmails(receiver.EmailAddress, receiver.FirstName, SendEmailType.newMessage, $" شما پیام جدیدی از {sender.FirstName} دارید");
+                        Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender.FirstName, "", receiver.TelegramChatId);
                     }
                 }
 
@@ -1164,64 +1184,22 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
         }
 
-        private string GenerateRandomNumber()
+        private string GenerateRandomNumber(int countNumbers = 5)
         {
             const string chars = "0123456789";
             Random random = new Random();
-            return new string(Enumerable.Repeat(chars, 7)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-        }
+            char[] result = new char[countNumbers];
 
-        private async Task<ResultModel<bool>> SendEmailAsync(string RecipientMail, string VerifyCode, bool IsResetPassword, string receiverName)
-        {
-            try
+            // اولین کاراکتر نباید 0 باشد
+            result[0] = chars[random.Next(1, chars.Length)];
+
+            // بقیه کاراکترها
+            for (int i = 1; i < countNumbers; i++)
             {
-                var SenderEmail = _configuration["SenderEmailInfo:SenderEmail"];
-                string SenderEmailAppPassword = _configuration["SenderEmailInfo:SenderEmailAppPassword"];
-                var SenderEmailFullName = _configuration["SenderEmailInfo:SenderEmailFullName"];
-                var SiteName = _configuration["SenderEmailInfo:SiteName"];
-
-                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
-                var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
-                var toAddress = new MailAddress(RecipientMail, receiverName);
-                string subject = IsResetPassword ? "رمز عبور جدید" : "کد تایید ایمیل";
-
-                string body = $"{receiverName} عزیز {Environment.NewLine}";
-                body += IsResetPassword ? $" رمز عبور جدید شما: {Environment.NewLine}{VerifyCode}" : $"کد تایید ایمیل شما: {VerifyCode}\n\nاعتبار تا: {dateExpire}";
-                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} {SiteName}";
-
-                var smtp = new SmtpClient
-                {
-                    Host = "smtp.gmail.com",
-                    Port = 587,
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, SenderEmailAppPassword),
-                    Timeout = 20000
-                };
-
-                using (var message = new MailMessage(fromAddress, toAddress)
-                {
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = false
-
-                })
-                {
-                    message.Bcc.Add(fromAddress);
-
-                    await smtp.SendMailAsync(message);
-                    Console.WriteLine("Email sent successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return new ResultModel<bool>(false, ex.Message);
+                result[i] = chars[random.Next(chars.Length)];
             }
 
-            return new ResultModel<bool>(true, true);
+            return new string(result);
         }
 
         private string BaseSearchQuery(bool getMeLog = false)
@@ -1365,7 +1343,11 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             {
                 string query = $"select count(id)  as UnreadMessagesCount ,count(distinct( senderUserId)) usersCount from UsersMessages where ReceiverUserId='{model.CurrentUserId}' and MessageStatusId=1";
 
-                var EmailIsVerified = (db.Users.Find(model.CurrentUserId).EmailAddressStatusId == 3);
+                var user = db.Users.Find(model.CurrentUserId);
+                if (user == null)
+                    return new ResultModel<UserHeaderData>(false);
+
+                var mobileIsVerified = (user?.MobileStatusId == 3);
 
                 int UnreadMessagesCount = 0;
                 int unreadMessagesUsersCount = 0;
@@ -1382,20 +1364,27 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                     unreadMessagesUsersCount = reader.GetInt32(reader.GetOrdinal("usersCount"));
                 }
                 connection.Close();
-                var userEmail = "";
-                if (!EmailIsVerified)
+                var mobileNumber = "";
+                if (!mobileIsVerified)
                 {
-                    var user = db.Users.Find(model.CurrentUserId);
-                    userEmail = user.EmailAddress;
+                    mobileNumber = user.Mobile;
                 }
 
 
+                var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == "SmsInboxNumber".ToLower());
+                var verifyMobileInboxNumber = config.KeyValue;
+
                 return new ResultModel<UserHeaderData>(new UserHeaderData
                 {
+                    UnreadMessagesUsersCount = unreadMessagesUsersCount,
                     UnreadMessagesCount = UnreadMessagesCount++,
-                    EmailIsVerified = EmailIsVerified,
-                    EmailAddress = userEmail,
-                    UnreadMessagesUsersCount = unreadMessagesUsersCount
+
+                    EmailIsVerified = user.EmailAddressStatusId == 3,
+                    EmailAddress = user.EmailAddress,
+
+                    MobileIsVerified = mobileIsVerified,
+                    MobileNumber = mobileNumber,
+                    VerifyMobileInboxNumber = verifyMobileInboxNumber
                 });
 
             }
@@ -1425,93 +1414,6 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
 
         #endregion
 
-        private async Task<ResultModel<bool>> sendAppEmails(string receiverEmail, string receiverName, SendEmailType msgType, string postfixBody = "")
-        {
-
-
-            try
-            {
-                var SenderEmail = _configuration["SenderEmailInfo:SenderEmail"];
-                string SenderEmailAppPassword = _configuration["SenderEmailInfo:SenderEmailAppPassword"];
-                var SenderEmailFullName = _configuration["SenderEmailInfo:SenderEmailFullName"];
-                var SiteName = _configuration["SenderEmailInfo:SiteName"];
-
-                var dateExpire = Helper.Miladi2ShamsiWithTime(DateTime.Now.AddMinutes(5));
-                var fromAddress = new MailAddress(SenderEmail, SenderEmailFullName);
-                var toAddress = new MailAddress(receiverEmail, receiverName);
-                string subject = "";
-                string body = "";
-                switch (msgType)
-                {
-                    case SendEmailType.wellcome:
-                        {
-                            subject = "خوش آمدید";
-                            body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += "به همسریار خوش آمدید . " + Environment.NewLine;
-                            body += "کلیه سرویس های این وب سایت رایگان میباشد . " + Environment.NewLine;
-
-                        }
-                        break;
-                    case SendEmailType.newMessage:
-                        {
-                            subject = "پیام جدید";
-                            body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += postfixBody;
-                        }
-                        break;
-
-                    case SendEmailType.login:
-                        {
-                            subject = "ورود به سایت";
-                            body = $"{receiverName} عزیز {Environment.NewLine}";
-                            body += "کاربری شما به سایت همسریابی همسریار وارد شده است" + Environment.NewLine;
-                            body += "در صورتی که این دسترسی غیر مجاز است" + Environment.NewLine;
-                            body += "سریعا به سایت مراجعه فرموده و کلمه عبور خود را تغییر دهید" + Environment.NewLine;
-                            body += "تا از هر گونه سرقت اطلاعات مصون بمانید" + Environment.NewLine;
-                        }
-                        break;
-
-                    default:
-                        break;
-                }
-
-                body += $"{Environment.NewLine}{Environment.NewLine}{Environment.NewLine} همسریار{Environment.NewLine}{Environment.NewLine} https://hamsaryar.com";
-
-                var smtp = new SmtpClient
-                {
-                    Host = "smtp.gmail.com",
-                    Port = 587,
-                    EnableSsl = true,
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(fromAddress.Address, SenderEmailAppPassword),
-                    Timeout = 20000
-                };
-
-                using (var message = new MailMessage(fromAddress, toAddress)
-                {
-                    Subject = subject,
-                    Body = body,
-                    IsBodyHtml = false
-
-                })
-                {
-                    message.Bcc.Add(fromAddress);
-                    await smtp.SendMailAsync(message);
-                    Console.WriteLine("Email sent successfully.");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return new ResultModel<bool>(false, ex.Message);
-            }
-
-
-            return new ResultModel<bool>(true, true);
-
-        }
-
         public ResultModel<bool> SendReport(SendReport model)
         {
             try
@@ -1540,20 +1442,6 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             }
         }
 
-        public List<string> getAllUserIds()
-        {
-            return db.Users.Select(x => x.Id).ToList();
-        }
-
-        public ResultModel<GetSiteDataResult> GetData()
-        {
-            var result = new GetSiteDataResult();
-            result.UsersCount = db.Users.Count();
-            result.lastloginUsers = db.Users.OrderByDescending(x => x.LastActivityDate).Select(x => x.UserName + " " + x.FirstName + " " + x.LastActivityDate).Take(10).ToList();
-            result.lastCreateUsers = db.Users.OrderByDescending(x => x.CreateUserDate).Select(x => x.UserName + " " + x.FirstName + " " + x.CreateUserDate).Take(10).ToList();
-            return new ResultModel<GetSiteDataResult>(result);
-        }
-
         public ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model)
         {
             try
@@ -1576,6 +1464,230 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             }
         }
 
+        public async Task<ResultModel<bool>> CheckMobileVerifyCode(CheckMobileVerifyCodeInputModel model)
+        {
+
+            var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+            if (!captcharesult.IsSuccess)
+                return new ResultModel<bool>(false, false, "کد امنیتی اشتباه است");
+
+            var result = await checkVerifyCodeMobile("_", model.CurrentUserId);
+            if (result.IsSuccess)
+                return new ResultModel<bool>(true, true);
+            return result;
+        }
+
+        public ResultModel<string> GetMobileVerifyCode(BaseInputModel model)
+        {
+            try
+            {
+
+
+                var user = db.Users.Find(model.CurrentUserId);
+                var code = GenerateRandomNumber(3);
+                user.MobileVerifyCode = code;
+                user.MobileVerifyCodeExpireDate = DateTime.Now.AddMinutes(15);
+                db.SaveChanges();
+
+                return new ResultModel<string>(code);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>();
+            }
+
+        }
+
+        public ResultModel<bool> UpdateUserMobileInVerify(MobileNumberUpdateInputModel model)
+        {
+            try
+            {
+                var isDouplicated = db.Users.Any(x => x.EmailAddress == model.MobileNumber && x.Id != model.CurrentUserId);
+                if (isDouplicated)
+                    return new ResultModel<bool>(false, false, "شماره موبایل توسط کاربر دیگری مورد استفاده قرار گرفته است");
+
+                var user = db.Users.Find(model.CurrentUserId);
+                user.Mobile = model.MobileNumber;
+                user.MobileStatusId = 1;
+                db.SaveChanges();
+                return new ResultModel<bool>(true, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<bool>(false, false, "خطا در انجام عملیات");
+
+            }
+        }
+
+
+        private async Task<ResultModel<bool>> checkVerifyCodeMobile(string mobile, string CurrentUserId)
+        {
+            var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == "SmsInboxNumber".ToLower());
+
+            string url = $"https://onlinesim.io/api/v1/free_numbers_content/countries/russia/{config.KeyValue.Substring(2)}?page=1&count=1000&ui=true&lang=en";
+
+            var user = new RUsers();
+            if (mobile == "_")
+                user = db.Users.Find(CurrentUserId);
+            if (CurrentUserId == "_")
+                user = db.Users.FirstOrDefault(x => x.Mobile == mobile);
+
+            string mobileNumber = "";
+            if (user != null)
+            {
+                mobileNumber = user.Mobile.Substring(user.Mobile.Length - 4);
+            }
+            HttpClient _httpClient = new HttpClient();
+
+            try
+            {
+
+                HttpResponseMessage response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+                ApiResponse result = JsonSerializer.Deserialize<ApiResponse>(jsonResponse, options);
+                var counter = 0;
+                foreach (var item in result.Messages.Data)
+                {
+                    counter++;
+
+                    var minute = item.DataHumans;
+                    var lastDigite = item.InNumber;
+                    item.DurationSince = 100;
+
+                    try
+                    {
+
+                        if (item.DataHumans.ToLower().Contains("minutes") || item.DataHumans.ToLower().Contains("second"))
+                        {
+                            minute = item.DataHumans.Substring(0, 2);
+                            item.DurationSince = Convert.ToInt32(minute);
+
+                            if (item.DataHumans.ToLower().Contains("second"))
+                                item.DurationSince = 1;
+
+                        }
+                        else
+                        {
+                        }
+                        if (item.InNumber.Length > 5)
+                        {
+                            lastDigite = item.InNumber.Substring(item.InNumber.Length - 4);
+                            item.LastFourDigits = lastDigite;
+                        }
+                        item.Text = item.Text.ToLower().Replace("received from OnlineSIM.io".ToLower(), "").Trim();
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
+                }
+                var code = result.Messages.Data.FirstOrDefault(x => x.LastFourDigits == mobileNumber && x.DurationSince < 15);
+
+                if (code != null)
+                    if (code.Text.ToLower().Contains(user.MobileVerifyCode.ToLower()) && user.MobileVerifyCodeExpireDate > DateTime.Now)
+                    {
+                        user.MobileStatusId = 3;
+                        db.SaveChanges();
+                        return new ResultModel<bool>(true, true);
+                    }
+
+                return new ResultModel<bool>(false, false, "اعتبار سنجی موبایل موفقیت آمیز نبود");
+
+            }
+            catch (Exception ex)
+            {
+                return new ResultModel<bool>(false, false, "خطای پیشبینی نشده ");
+            }
+        }
+        public ResultModel<CheckMobileNumberForResetPasswordResult> CheckMobileNumberForResetPassword(CheckMobileNumberForResetPasswordInputModel model)
+        {
+            try
+            {
+
+                var captcharesult = CheckCaptchaCode(model.CaptchaId, model.CaptchaValue);
+                if (!captcharesult.IsSuccess)
+                    return new ResultModel<CheckMobileNumberForResetPasswordResult>(null, false, "کد امنیتی اشتباه است");
+
+                var user = db.Users.FirstOrDefault(x => x.Mobile == model.MobileNumber);
+                if (user == null)
+                    return new ResultModel<CheckMobileNumberForResetPasswordResult>(null, false, "شماره موبایل نامعتبر است");
+
+                user.EmailVerifyCode = GenerateRandomNumber();
+                db.SaveChanges();
+
+
+                var verifyMobileInboxNumber = GetConfig("SmsInboxNumber").Model;
+
+                return new ResultModel<CheckMobileNumberForResetPasswordResult>(new CheckMobileNumberForResetPasswordResult
+                {
+                    InboxNumber = verifyMobileInboxNumber,
+                    VerifyCode = user.EmailVerifyCode,
+                    IsValidMobile = true
+                }, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<CheckMobileNumberForResetPasswordResult>(null, false, "خطا در انجام عملیات");
+
+            }
+        }
+
+        public async Task<ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>> GetNewPassword_Forgate(CheckMobileVerifyCodeForgetPasswordInputModel model)
+        {
+
+
+            try
+            {
+                var user = db.Users.FirstOrDefault(x => x.Mobile == model.MobileNumber);
+                if (user == null)
+                    return new ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>(null, false, "شماره موبایل نامعتبر است");
+
+                var result = await checkVerifyCodeMobile(model.MobileNumber, "_");
+                if (!result.IsSuccess)
+                    return new ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>(null, false, result.Message);
+
+                var pass = GenerateRandomNumber();
+                user.Password = pass;
+                db.SaveChanges();
+
+                return new ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>(new CheckMobileVerifyCodeForgetPasswordResultModel
+                {
+                    Username = user.UserName,
+                    Password = pass
+                }, true);
+
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<CheckMobileVerifyCodeForgetPasswordResultModel>(null, false, "خطا در انجام عملیات");
+
+            }
+        }
+
+        public ResultModel<string> GetConfig(string KeyName)
+        {
+            try
+            {
+                var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == KeyName.ToLower());
+                if (config != null)
+                    return new ResultModel<string>(config.KeyValue);
+
+                return new ResultModel<string>(false);
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>(false);
+            }
+        }
+
         public enum SendEmailType
         {
             wellcome,
@@ -1583,5 +1695,6 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
             login,
         }
     }
+
 
 }

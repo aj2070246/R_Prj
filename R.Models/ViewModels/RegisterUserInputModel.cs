@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace R.Models.ViewModels
 {
-    public class RegisterUserInputModel:BaseInputModel
+    public class RegisterUserInputModel : BaseInputModel
     {
         public string CaptchaId { get; set; }
         public string CaptchaValue { get; set; }
@@ -67,5 +67,23 @@ namespace R.Models.ViewModels
         public int? FirstCheildAge { get; set; }
         public int ZibaeeNumber { get; set; }
         public int TipNUmber { get; set; }
+    }
+
+    public class SendTelegramMessageInputModel : BaseInputModel
+    {
+
+        public string CaptchaId { get; set; }
+        public string CaptchaValue { get; set; }
+        public string Number { get; set; }
+        public string User { get; set; }
+
+    }
+
+    public class GetMobileVerifyCodeInputModel : BaseInputModel
+    {
+
+        public string CaptchaId { get; set; }
+        public string CaptchaValue { get; set; }
+
     }
 }

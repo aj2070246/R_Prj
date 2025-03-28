@@ -18,13 +18,11 @@ namespace R.Api.Controllers
     {
         private readonly IPublicService _service;
         private readonly IAdminService _admin;
-        private readonly ILogger<WeatherForecastController> _logger;
 
 
-        public AdminController(IPublicService service, IAdminService admin, ILogger<WeatherForecastController> logger)
+        public AdminController(IPublicService service, IAdminService admin )
         {
             _service = service;
-            _logger = logger;
             _admin = admin;
         }
         [HttpPost("getLastUsers")]

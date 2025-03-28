@@ -33,12 +33,14 @@ namespace R.Api
                     "DownloadProfilePicture".ToLower(),
                     "GetUserInfo".ToLower(),
                     "GetAllDropDownsItems".ToLower(),
+                    "ReceiveUpdate".ToLower(),
                     "SearchUsers".ToLower(),
+                    "TelegramWebhook".ToLower(),
                     "registeruser",
-                    "login", "getcaptcha", "getmmmmm","adminlogin"
+                    "login", "getcaptcha", "getmmmmm","adminlogin",""
                 };
-                var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName;
-                if (!string.IsNullOrEmpty(actionName))
+                var actionName = endpoint.Metadata.GetMetadata<Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor>()?.ActionName.Trim().ToLower();
+                if (!string.IsNullOrEmpty(actionName.Trim()))
                     if (!trustedActions.Contains(actionName.ToLower()))
                     {
                         if (actionName == "DownloadProfilePhoto")

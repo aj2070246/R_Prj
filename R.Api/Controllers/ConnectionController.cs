@@ -7,23 +7,17 @@ using R.Database.Entities;
 using SixLabors.ImageSharp;
 namespace R.Api.Controllers
 {
-    //dotnet publish --configuration Release --runtime linux-x64 --self-contained=false -o ./publish
-    //sudo systemctl restart nginx
-
 
     [ApiController]
     [Route("[controller]")]
     public class ConnectionController : ControllerBase
     {
         private readonly IPublicService _service;
-        private readonly ILogger<WeatherForecastController> _logger;
 
 
-        public ConnectionController(IPublicService service, ILogger<WeatherForecastController> logger)
+        public ConnectionController(IPublicService service)
         {
             _service = service;
-            _logger = logger;
-
         }
         #region all Serach users
 
@@ -67,12 +61,25 @@ namespace R.Api.Controllers
         }
         #endregion
 
+
+        [HttpPost("CheckMobileVerifyCode")]
+        public async Task<ResultModel<bool>> CheckMobileVerifyCode(CheckMobileVerifyCodeInputModel model)
+        {
+            var result = await _service.CheckMobileVerifyCode(model);
+            return result;
+        }
+
+        [HttpPost("UpdateUserMobileInVerify")]
+        public ResultModel<bool> UpdateUserMobileInVerify(MobileNumberUpdateInputModel model)
+        {
+            return _service.UpdateUserMobileInVerify(model);
+        }
         [HttpPost("UpdateEmailAddress")]
         public ResultModel<bool> UpdateEmailAddress(EmailUpdateInputModel model)
         {
             return _service.UpdateEmailAddress(model);
         }
-        
+
         [HttpPost("GetUserInfo")]
         public ResultModel<GetOneUserData> GetUserInfo(SelectedItemModel model)
         {

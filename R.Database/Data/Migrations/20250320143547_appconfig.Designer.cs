@@ -9,11 +9,11 @@ using R.Database;
 
 #nullable disable
 
-namespace R.Database.Migrations
+namespace R.Database.Data.Migrations
 {
     [DbContext(typeof(RDbContext))]
-    [Migration("20250302084436_t1")]
-    partial class t1
+    [Migration("20250320143547_appconfig")]
+    partial class appconfig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,31 @@ namespace R.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Age");
+                });
+
+            modelBuilder.Entity("R.Database.Entities.AppConfigs", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("KeyDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("KeyName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("KeyValue")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppConfigs");
                 });
 
             modelBuilder.Entity("R.Database.Entities.BlockedDataLog", b =>

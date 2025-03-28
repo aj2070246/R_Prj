@@ -1,4 +1,6 @@
-﻿namespace R.Models
+﻿using System.Reflection;
+
+namespace R.Models
 
 {
     public class ResultModel<T>
@@ -6,6 +8,9 @@
 
         public ResultModel(T model, bool isSuccess = true, string message = "با موفقیت انجام شد", int statusCode = 200)
         {
+            if(model==null)
+                isSuccess = false;
+
             IsSuccess = isSuccess;
             Message = message;
             StatusCode = statusCode;
@@ -13,6 +18,7 @@
         }
         public ResultModel(bool isSuccess = false, string message = "خطا در انجام عملیات", int statusCode = 500)
         {
+          
             IsSuccess = isSuccess;
             Message = message;
             StatusCode = statusCode; 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using R.Models;
 using R.Models.AdminModels;
@@ -24,5 +25,8 @@ namespace R.Services.IServices
         ResultModel<bool> SendAdminMessage(SendMessageAdminPanel model);
         ResultModel<GetUserProfileForUpdateAdmin> GetUserProfile(SelectedItemModel model);
         ResultModel<bool> UpdateUserInfo(UpdateUserByAdminInputModel model);
+        ResultModel<string> SaveUserChatId(long userId, string phoneElement);
+        ResultModel<string> GetMobileOtp(string userPhone);
+        ResultModel<string>  SetUserMobileIsVerify(string userPhone);
     }
 }
