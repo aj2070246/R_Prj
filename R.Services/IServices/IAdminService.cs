@@ -26,7 +26,9 @@ namespace R.Services.IServices
         ResultModel<GetUserProfileForUpdateAdmin> GetUserProfile(SelectedItemModel model);
         ResultModel<bool> UpdateUserInfo(UpdateUserByAdminInputModel model);
         ResultModel<string> SaveUserChatId(long userId, string phoneElement);
-        ResultModel<string> GetMobileOtp(string userPhone);
-        ResultModel<string>  SetUserMobileIsVerify(string userPhone);
+        ResultModel<string> GetMobileOtp(long chatId);
+        ResultModel<string> SetUserMobileIsVerify(long chatId);
+        ResultModel<string> UserIsSentMobileNumber(long chatId); 
+
     }
 }

@@ -160,7 +160,7 @@ namespace R.Api.Controllers
     }
 }
 
-
+// local dns ngrok
 //dotnet publish --configuration Release --runtime linux-x64 --self-contained=false -o ./publish
 
 //0T84f01pN7khzCWVBj

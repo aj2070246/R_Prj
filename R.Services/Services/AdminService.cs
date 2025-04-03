@@ -535,7 +535,7 @@ namespace R.Services.Services
                 if (model.EmailStatus == 1)
                 {
                     message = string.Empty;
-                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender.FirstName, message,receiver.TelegramChatId);
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender.FirstName, message, receiver.TelegramChatId);
                 }
                 else if (model.EmailStatus == 2)
                 {
@@ -571,7 +571,7 @@ namespace R.Services.Services
                 if (model.EmailStatus == 1)
                 {
                     message = string.Empty;
-                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender?.FirstName, message,receiver.TelegramChatId);
+                    Helper.SendChatEmail(receiver.EmailAddress, receiver.FirstName, sender?.FirstName, message, receiver.TelegramChatId);
                 }
                 else if (model.EmailStatus == 2)
                 {
@@ -713,7 +713,10 @@ namespace R.Services.Services
         {
             try
             {
-                string phoneNumber = "0" + phoneElement.Substring(3);
+                string phoneNumber = phoneElement.Replace("+98", "0");
+                if (phoneNumber.Length > 11)
+                    phoneNumber = "0" + phoneElement.Substring(phoneElement.Length - 10);
+
                 var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
                 if (user == null)
                 {
@@ -734,13 +737,30 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<string> GetMobileOtp(string userPhone)
+
+        public ResultModel<string> UserIsSentMobileNumber(long chatId)
         {
             try
             {
-                string phoneNumber = "0" + userPhone.Substring(3);
 
-                var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
+                var user = db.Users.FirstOrDefault(x => x.TelegramChatId == chatId);
+                if (user == null)
+                    return new ResultModel<string>(false, "شماره شما یافت نشد . خطای غیر منتظره");
+
+                return new ResultModel<string>(true);
+            }
+            catch (Exception e)
+            {
+                return new ResultModel<string>(false);
+            }
+        }
+
+        public ResultModel<string> GetMobileOtp(long chatId)
+        {
+            try
+            {
+
+                var user = db.Users.FirstOrDefault(x => x.TelegramChatId == chatId);
                 if (user == null)
                 {
                     return new ResultModel<string>(false, "شماره شما یافت نشد . خطای غیر منتظره");
@@ -757,18 +777,18 @@ namespace R.Services.Services
             }
         }
 
-        public ResultModel<string> SetUserMobileIsVerify(string userPhone)
+        public ResultModel<string> SetUserMobileIsVerify(long chatId)
         {
             try
             {
-                string phoneNumber = "0" + userPhone.Substring(3);
-                var user = db.Users.FirstOrDefault(x => x.Mobile == phoneNumber);
+
+                var user = db.Users.FirstOrDefault(x => x.TelegramChatId == chatId);
                 if (user == null)
                     return new ResultModel<string>(false, "شماره شما یافت نشد");
 
                 user.MobileStatusId = 3;
                 db.SaveChanges();
-                return new ResultModel<string>(userPhone, true);
+                return new ResultModel<string>(true);
 
             }
             catch (Exception e)

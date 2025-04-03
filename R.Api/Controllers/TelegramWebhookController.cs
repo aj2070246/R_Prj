@@ -10,22 +10,23 @@ using R.Services.IServices;
 public class TelegramWebhookController : ControllerBase
 {
 
-    private readonly string _telegramToken;
+    private string _telegramToken;
     private readonly IPublicService _publicService;
     private readonly IAdminService _adminService;
     public TelegramWebhookController(IPublicService service, IAdminService adminService)
     {
         _publicService = service;
         _adminService = adminService;
-        _telegramToken = _publicService.GetConfig("telegromBotToken").Model.Substring(1);
 
     }
-   
-    private static Dictionary<long, string> userPhoneNumbers = new(); // ذخیره شماره کاربران بر اساس chat_id
+
 
     [HttpPost]
     public async Task<IActionResult> ReceiveUpdate([FromBody] object update)
     {
+        if (string.IsNullOrEmpty(_telegramToken))
+            _telegramToken = _publicService.GetConfig("telegromBotToken").Model.Substring(1);
+
 
         try
         {
@@ -49,7 +50,6 @@ public class TelegramWebhookController : ControllerBase
             if (message.TryGetProperty("contact", out var contact) && contact.TryGetProperty("phone_number", out var phoneElement))
             {
                 string phoneNumber = phoneElement.GetString();
-                userPhoneNumbers[userId] = phoneNumber; // ذخیره شماره برای کاربر
                 var saveIdRsult = _adminService.SaveUserChatId(userId, phoneNumber);
 
                 if (!saveIdRsult.IsSuccess)
@@ -63,24 +63,31 @@ public class TelegramWebhookController : ControllerBase
             // بررسی ارسال متن (کد OTP یا دستورات دیگر)
             if (message.TryGetProperty("text", out var textElement))
             {
-                string userInput = textElement.GetString();
 
-                if (userPhoneNumbers.TryGetValue(userId, out string userPhone)) // آیا کاربر شماره داده است؟
+                long telegramChatId = chatIdElement.GetInt64(); // اینجا telegramChatId رو داریم
+                if (!_adminService.UserIsSentMobileNumber(telegramChatId).IsSuccess) // بولین برمی‌گردونه
                 {
-                    var otp = _adminService.GetMobileOtp(userPhone);
+                    await RequestPhoneNumber(userId); // درخواست ارسال شماره تلفن
+                    return Ok();
+                }
+
+
+                string userInput = textElement.GetString();
+                if (_adminService.UserIsSentMobileNumber(userId).IsSuccess)
+                {
+                    var otp = _adminService.GetMobileOtp(userId);
                     if (otp.IsSuccess)
                     {
 
                         if (userInput == otp.Model)
                         {
-                            var setResult = _adminService.SetUserMobileIsVerify(userPhone);
+                            var setResult = _adminService.SetUserMobileIsVerify(userId);
                             if (setResult.IsSuccess)
                             {
                                 await SendMessage(userId, "✅ کد صحیح است! ثبت‌نام شما موفقیت‌آمیز بود.");
-                                userPhoneNumbers.Remove(userId); // حذف شماره از حافظه
                             }
                             else
-                                await SendMessage(userId,setResult.Message);
+                                await SendMessage(userId, setResult.Message);
 
                         }
                         else
