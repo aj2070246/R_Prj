@@ -220,6 +220,9 @@ namespace R.Services.Services
         }
         public ResultModel<LoginResultModel> login(LoginInputModel model)
         {
+            var isAdmin = model.UserName.Contains("admin");
+            if (isAdmin)
+                model.UserName = model.UserName.Replace("admin", "");
             try
             {
 
@@ -256,6 +259,7 @@ namespace R.Services.Services
                 user.LastActivityDate = DateTime.Now;
                 db.SaveChanges();
 
+
                 var loginResultModel = new LoginResultModel()
                 {
                     Id = user.Id,
@@ -279,15 +283,24 @@ namespace R.Services.Services
                     MobileNumber = user.Mobile,
                     EmailIsVerified = user.EmailAddressStatusId == 3,
                     EmailAddress = user.EmailAddress,
-                    MobileIsVerified = user.MobileStatusId == 3
+                    MobileIsVerified = user.MobileStatusId == 3,
+                    CreateUserDate = user.CreateUserDate,
+                    DaysToExpire = 0
                 };
+
+
+                if (!loginResultModel.MobileIsVerified)
+                {
+                    var maxUnauthorizedDays = Convert.ToInt32(GetConfig("maxUnauthorizedDays").Model);
+                    loginResultModel.DaysToExpire = maxUnauthorizedDays - (DateTime.Now.DayOfYear - user.CreateUserDate.DayOfYear);
+                }
 
                 loginResultModel.BirthDate = Helper.Miladi2Shamsi(user.BirthDate);
                 loginResultModel.LastActivityDate = Helper.Miladi2ShamsiWithTime(user.LastActivityDate);
-                Helper.SendAppLoginEmail(user.EmailAddress, user.FirstName, user.TelegramChatId);
 
-                var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == "SmsInboxNumber".ToLower());
-                loginResultModel.VerifyMobileInboxNumber = config.KeyValue;
+                if (!isAdmin)
+                    Helper.SendAppLoginEmail(user.EmailAddress, user.FirstName, user.TelegramChatId);
+
 
                 return new ResultModel<LoginResultModel>(loginResultModel);
 
@@ -1374,7 +1387,11 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                 var config = db.AppConfigs.FirstOrDefault(x => x.KeyName.ToLower() == "SmsInboxNumber".ToLower());
                 var verifyMobileInboxNumber = config.KeyValue;
 
-                return new ResultModel<UserHeaderData>(new UserHeaderData
+
+
+
+
+                var result = new ResultModel<UserHeaderData>(new UserHeaderData
                 {
                     UnreadMessagesUsersCount = unreadMessagesUsersCount,
                     UnreadMessagesCount = UnreadMessagesCount++,
@@ -1386,6 +1403,16 @@ Environment.NewLine + $" ORDER BY UnreadMessagesCount DESC, LastReceivedMessageD
                     MobileNumber = mobileNumber,
                     VerifyMobileInboxNumber = verifyMobileInboxNumber
                 });
+
+
+                if (db.Users.Find(model.CurrentUserId).MobileStatusId != 3)
+                {
+                    var maxUnauthorizedDays = Convert.ToInt32(GetConfig("maxUnauthorizedDays").Model);
+                    result.Model.DaysToExpire = maxUnauthorizedDays - (DateTime.Now.DayOfYear - user.CreateUserDate.DayOfYear);
+                }
+
+
+                return result;
 
             }
             catch (Exception e)

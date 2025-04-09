@@ -34,5 +34,7 @@ namespace R.Models.ViewModels
         public bool EmailIsVerified { get; set; }
         public bool MobileIsVerified { get; set; }
         public string VerifyMobileInboxNumber { get; set; }
+        public DateTime CreateUserDate { get; set; }
+        public int DaysToExpire { get; set; }
     }
 }

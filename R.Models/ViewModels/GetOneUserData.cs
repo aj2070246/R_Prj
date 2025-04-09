@@ -67,6 +67,7 @@ namespace R.Models.ViewModels
     public class UserHeaderData
     {
         public int UnreadMessagesCount { get; set; }
+        public int DaysToExpire { get; set; }
         public int UnreadMessagesUsersCount { get; set; }
         public string MobileNumber { get; set; }
         public bool MobileIsVerified { get; set; }

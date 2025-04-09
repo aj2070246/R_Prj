@@ -144,7 +144,7 @@ namespace R.Api.Controllers
 
 
         [HttpPost("SendReport")]
-        public ResultModel<bool> SendMessage(SendReport model)
+        public ResultModel<bool> SendReport(SendReport model)
         {
             return _service.SendReport(model);
         }
